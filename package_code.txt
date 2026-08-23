@@ -1,0 +1,4 @@
+cd C:\Users\hemen\Desktop\flame-detect-app
+$env:Path = "C:\Users\hemen\AppData\Roaming\JetBrains\PyCharm2026.1\node\versions\24.19.0;" + $env:Path
+Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+npm run build:win

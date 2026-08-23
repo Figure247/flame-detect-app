@@ -1,0 +1,2014 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YOLOv8 火焰检测系统 · 完整版</title>
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+        style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;
+        img-src 'self' data: https: blob:;
+        font-src 'self' https://cdnjs.cloudflare.com;
+        connect-src 'self' http://localhost:8000 http://127.0.0.1:8000;
+        media-src 'self' blob:;
+    ">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        /* ===== CSS 变量 ===== */
+        :root {
+            --bg-body: #f0f2f5;
+            --bg-sidebar: #ffffff;
+            --bg-content: #f0f2f5;
+            --bg-card: #ffffff;
+            --bg-card-hover: #f8f9fa;
+            --bg-input: #f1f3f5;
+            --bg-overlay: rgba(0, 0, 0, 0.5);
+            --text-primary: #1a1a2e;
+            --text-secondary: #4a4a6a;
+            --text-muted: #8a8aa8;
+            --text-white: #ffffff;
+            --border-color: #e8e8f0;
+            --border-light: rgba(0, 0, 0, 0.06);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+            --brand-red: #e11d48;
+            --brand-red-light: #f43f5e;
+            --brand-blue: #3b82f6;
+            --brand-purple: #8b5cf6;
+            --brand-green: #22c55e;
+            --brand-cyan: #06b6d4;
+            --brand-gold: #f59e0b;
+            --brand-orange: #f97316;
+            --gradient-fire: linear-gradient(135deg, #f43f5e, #e11d48);
+            --gradient-cyan: linear-gradient(135deg, #06b6d4, #3b82f6);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6, #d946ef);
+            --gradient-green: linear-gradient(135deg, #22c55e, #10b981);
+            --gradient-gold: linear-gradient(135deg, #f59e0b, #fbbf24);
+            --gradient-orange: linear-gradient(135deg, #f97316, #fb923c);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+            --radius-xs: 6px;
+            --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f0f1a;
+            --bg-sidebar: #1a1a2e;
+            --bg-content: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --bg-card-hover: #252540;
+            --bg-input: #252540;
+            --bg-overlay: rgba(0, 0, 0, 0.7);
+            --text-primary: #e8e8f0;
+            --text-secondary: #a8a8c8;
+            --text-muted: #6a6a8a;
+            --border-color: #2a2a44;
+            --border-light: rgba(255, 255, 255, 0.06);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: var(--transition-smooth);
+        }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+
+        .app { display: flex; min-height: 100vh; }
+
+        /* ===== 侧边栏 ===== */
+        .sidebar {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 220px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column;
+            padding: 20px 14px;
+            transition: var(--transition-smooth);
+            z-index: 100;
+            overflow-y: auto;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0 8px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 16px;
+        }
+        .sidebar-brand .icon {
+            width: 38px; height: 38px;
+            border-radius: var(--radius-sm);
+            background: var(--gradient-fire);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
+            transition: var(--transition-spring);
+        }
+        .sidebar-brand .icon:hover { transform: rotate(8deg) scale(1.04); }
+        .sidebar-brand .name {
+            font-size: 1rem; font-weight: 700;
+            background: var(--gradient-fire);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .sidebar-brand .name small {
+            display: block; font-size: 0.5rem; font-weight: 400;
+            -webkit-text-fill-color: var(--text-muted);
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .sidebar-nav { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-nav .nav-label {
+            font-size: 0.55rem; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted);
+            padding: 10px 12px 4px; font-weight: 600;
+        }
+        .sidebar-nav .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 8px 14px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            color: var(--text-secondary);
+            font-size: 0.8rem; font-weight: 500;
+            border: none; background: transparent;
+            width: 100%; font-family: inherit;
+            position: relative; overflow: hidden;
+        }
+        .sidebar-nav .nav-item::after {
+            content: ''; position: absolute; left: 0; top: 0;
+            width: 4px; height: 100%;
+            background: var(--gradient-fire);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        .sidebar-nav .nav-item:hover::after { transform: scaleY(0.6); }
+        .sidebar-nav .nav-item.active::after { transform: scaleY(1); }
+        .sidebar-nav .nav-item:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+            transform: translateX(4px);
+        }
+        .sidebar-nav .nav-item.active {
+            background: var(--gradient-fire);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(225, 29, 72, 0.3);
+            transform: translateX(0);
+        }
+        .sidebar-nav .nav-item.active i { color: #fff; }
+        .sidebar-nav .nav-item i {
+            width: 18px; text-align: center;
+            font-size: 0.9rem; color: var(--text-muted);
+            transition: var(--transition-smooth);
+        }
+        .sidebar-nav .nav-item .badge-nav {
+            margin-left: auto; font-size: 0.5rem;
+            padding: 1px 8px; border-radius: 10px;
+            background: var(--border-color);
+            color: var(--text-muted);
+        }
+        .sidebar-nav .nav-item.active .badge-nav {
+            background: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--border-color);
+            padding-top: 14px; margin-top: 6px;
+        }
+        .sidebar-footer .status-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 12px;
+            font-size: 0.65rem; color: var(--text-muted);
+        }
+        .sidebar-footer .status-row .dot {
+            width: 6px; height: 6px; border-radius: 50%;
+            display: inline-block;
+            transition: var(--transition-smooth);
+        }
+        .sidebar-footer .status-row .dot.online {
+            background: #22c55e;
+            animation: pulse-dot 2s infinite;
+        }
+        .sidebar-footer .status-row .dot.offline { background: #ef4444; }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(0.9); }
+        }
+
+        .sidebar-footer .theme-toggle-side {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            border: none; background: transparent;
+            width: 100%;
+            color: var(--text-secondary);
+            font-size: 0.75rem; font-family: inherit;
+        }
+        .sidebar-footer .theme-toggle-side:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-1px);
+        }
+        .sidebar-footer .theme-toggle-side .toggle-track {
+            width: 36px; height: 20px;
+            border-radius: 10px;
+            background: var(--border-color);
+            position: relative;
+            transition: var(--transition-smooth);
+            flex-shrink: 0;
+        }
+        .sidebar-footer .theme-toggle-side .toggle-track .thumb {
+            width: 16px; height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute; top: 2px; left: 2px;
+            transition: var(--transition-spring);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        [data-theme="dark"] .sidebar-footer .theme-toggle-side .toggle-track {
+            background: var(--gradient-fire);
+        }
+        [data-theme="dark"] .sidebar-footer .theme-toggle-side .toggle-track .thumb {
+            left: 18px;
+        }
+
+        /* ===== 主内容 ===== */
+        .main {
+            margin-left: 220px;
+            flex: 1;
+            padding: 20px 28px 28px;
+            min-height: 100vh;
+            background: var(--bg-content);
+            transition: var(--transition-smooth);
+        }
+
+        .topbar {
+            display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-left h1 { font-size: 1.3rem; font-weight: 700; }
+        .topbar-left h1 span { color: var(--text-muted); font-weight: 400; }
+        .topbar-left .page-indicator {
+            font-size: 0.65rem; color: var(--text-muted);
+            background: var(--bg-card);
+            padding: 3px 12px; border-radius: 16px;
+            border: 1px solid var(--border-color);
+        }
+        .topbar-right {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 0.75rem; color: var(--text-muted);
+        }
+        .topbar-right .model-badge {
+            padding: 3px 12px; border-radius: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 0.65rem; color: var(--text-secondary);
+        }
+        .topbar-right .model-badge i { color: var(--brand-green); }
+        .topbar-right .clock {
+            font-family: monospace; font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .topbar-right .app-badge {
+            font-size: 0.55rem; padding: 2px 10px;
+            border-radius: 12px;
+            background: var(--gradient-fire);
+            color: #fff; font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 页面 ===== */
+        .page { display: none; animation: fadeInUp 0.5s cubic-bezier(0.23,1,0.32,1); }
+        .page.active { display: block; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(24px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== 面板 ===== */
+        .panel {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 18px 22px 22px;
+            border: 1px solid var(--border-color);
+            transition: var(--transition-smooth);
+            margin-bottom: 18px;
+            position: relative; overflow: hidden;
+        }
+        .panel::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: var(--gradient-fire);
+            transform: scaleX(0);
+            transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+            transform-origin: left;
+        }
+        .panel:hover::before { transform: scaleX(1); }
+        .panel:last-child { margin-bottom: 0; }
+        .panel:hover {
+            border-color: var(--border-light);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        .panel-header {
+            display: flex; justify-content: space-between;
+            align-items: center; flex-wrap: wrap;
+            gap: 8px; margin-bottom: 14px;
+        }
+        .panel-header .title {
+            font-size: 0.9rem; font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+        }
+        .panel-header .title i { color: var(--brand-red-light); transition: var(--transition-smooth); }
+        .panel:hover .panel-header .title i { transform: rotate(-6deg) scale(1.05); }
+        .panel-header .sub { font-size: 0.65rem; color: var(--text-muted); }
+
+        /* ===== 统计卡片 ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin-bottom: 18px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; gap: 14px;
+            transition: var(--transition-spring);
+            cursor: default;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--brand-red-light);
+        }
+        .stat-card .icon {
+            width: 38px; height: 38px;
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 0.9rem;
+            flex-shrink: 0;
+            transition: var(--transition-smooth);
+        }
+        .stat-card:hover .icon { transform: rotate(6deg) scale(1.08); }
+        .stat-card .icon.red { background: var(--gradient-fire); }
+        .stat-card .icon.blue { background: var(--gradient-cyan); }
+        .stat-card .icon.purple { background: var(--gradient-purple); }
+        .stat-card .icon.green { background: var(--gradient-green); }
+        .stat-card .icon.gold { background: var(--gradient-gold); }
+        .stat-card .icon.orange { background: var(--gradient-orange); }
+        .stat-card .info h4 { font-size: 1.1rem; font-weight: 700; line-height: 1.2; }
+        .stat-card .info p {
+            font-size: 0.6rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        /* ===== 按钮 ===== */
+        .btn {
+            padding: 6px 16px;
+            border-radius: 30px;
+            border: none;
+            font-weight: 600; font-size: 0.7rem;
+            cursor: pointer;
+            transition: var(--transition-spring);
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: inherit;
+            position: relative; overflow: hidden;
+        }
+        .btn::after {
+            content: ''; position: absolute; inset: 0;
+            background: rgba(255,255,255,0.15);
+            transform: scaleX(0); transform-origin: right;
+            transition: transform 0.4s ease;
+        }
+        .btn:hover::after { transform: scaleX(1); transform-origin: left; }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: var(--shadow-md);
+        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+
+        .btn-primary { background: var(--gradient-fire); color: #fff; }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(225,29,72,0.35); }
+        .btn-success { background: var(--gradient-green); color: #fff; }
+        .btn-success:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(34,197,94,0.3); }
+        .btn-purple { background: var(--gradient-purple); color: #fff; }
+        .btn-purple:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(139,92,246,0.3); }
+        .btn-cyan { background: var(--gradient-cyan); color: #fff; }
+        .btn-cyan:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(6,182,212,0.3); }
+        .btn-gold { background: var(--gradient-gold); color: #fff; }
+        .btn-gold:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(245,158,11,0.3); }
+        .btn-ghost {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-ghost:hover:not(:disabled) {
+            background: var(--bg-card-hover);
+            border-color: var(--text-muted);
+        }
+        .btn-sm { padding: 3px 12px; font-size: 0.6rem; }
+        .btn-xs { padding: 2px 10px; font-size: 0.55rem; }
+        .btn-record { background: #dc2626; color: #fff; }
+        .btn-record.active { background: var(--brand-green); }
+        .btn-save { background: var(--brand-cyan); color: #fff; }
+        .btn-save.active { background: var(--brand-red-light); }
+        .btn-debug {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-debug.active { background: var(--brand-purple); color: #fff; border-color: var(--brand-purple); }
+
+        .control-bar {
+            display: flex; flex-wrap: wrap; gap: 6px;
+            margin-top: 10px; align-items: center;
+        }
+
+        /* ===== 上传区域 ===== */
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 28px 16px;
+            text-align: center;
+            background: var(--bg-input);
+            transition: var(--transition-smooth);
+            cursor: pointer;
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: var(--brand-red-light);
+            background: var(--bg-card-hover);
+            transform: scale(1.005);
+        }
+        .upload-zone.dragover {
+            border-color: var(--brand-red-light);
+            background: rgba(225,29,72,0.06);
+            box-shadow: 0 0 40px rgba(225,29,72,0.08);
+            transform: scale(1.01);
+        }
+        .upload-zone .icon-big {
+            font-size: 2rem; color: var(--text-muted);
+            margin-bottom: 4px;
+            transition: var(--transition-smooth);
+        }
+        .upload-zone:hover .icon-big {
+            transform: translateY(-4px) scale(1.08);
+            color: var(--brand-red-light);
+        }
+        .upload-zone p { color: var(--text-secondary); font-size: 0.8rem; }
+        .upload-zone .hint { font-size: 0.6rem; color: var(--text-muted); }
+
+        /* ===== 视频容器 ===== */
+        .video-wrapper {
+            position: relative;
+            width: 100%; aspect-ratio: 16/9;
+            background: #0a0a0f;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            transition: var(--transition-smooth);
+        }
+        .video-wrapper video, .video-wrapper canvas {
+            width: 100%; height: 100%;
+            object-fit: contain;
+            display: block;
+            position: absolute; top: 0; left: 0;
+        }
+        .video-wrapper video { display: none; }
+
+        .overlay-status {
+            position: absolute; bottom: 12px; left: 12px;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 3px 14px;
+            border-radius: 16px;
+            font-size: 0.65rem;
+            display: flex; align-items: center; gap: 8px;
+            z-index: 10;
+        }
+        .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .dot.green { background: #22c55e; }
+        .dot.red { background: #ef4444; animation: pulse-dot 1s infinite; }
+        .dot.paused { background: #f59e0b; }
+        .dot.off { background: #6a6a8a; }
+        .dot.recording { background: #ef4444; animation: pulse-dot 0.5s infinite; }
+
+        .fullscreen-btn {
+            position: absolute; bottom: 12px; right: 12px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            width: 30px; height: 30px;
+            border-radius: var(--radius-xs);
+            cursor: pointer;
+            z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition-spring);
+        }
+        .fullscreen-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.12); }
+        .fullscreen-btn .fa-compress { display: none; }
+        .video-wrapper.fullscreen {
+            position: fixed; top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            z-index: 9999;
+            border-radius: 0; border: none;
+            background: #000;
+            aspect-ratio: auto;
+            animation: zoomIn 0.3s ease;
+        }
+        @keyframes zoomIn {
+            from { transform: scale(0.96); opacity: 0.8; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .video-wrapper.fullscreen .fullscreen-btn .fa-expand { display: none; }
+        .video-wrapper.fullscreen .fullscreen-btn .fa-compress { display: inline; }
+
+        .record-indicator {
+            position: absolute; top: 12px; right: 12px;
+            background: rgba(220,38,38,0.85);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 3px 14px;
+            border-radius: 16px;
+            font-size: 0.65rem; font-weight: 600;
+            display: none;
+            align-items: center; gap: 8px;
+            z-index: 10;
+            animation: pulse-dot 0.8s infinite;
+        }
+        .record-indicator.active { display: flex; }
+        .record-indicator .rec-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ff0000;
+            animation: pulse-dot 0.5s infinite;
+        }
+
+        /* ===== 设置栏 ===== */
+        .settings-bar {
+            display: flex; flex-wrap: wrap; gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+            padding: 8px 14px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+        }
+        .settings-bar label {
+            font-size: 0.65rem; font-weight: 500;
+            color: var(--text-secondary);
+            display: flex; align-items: center; gap: 6px;
+        }
+        .settings-bar input[type="range"] {
+            width: 80px;
+            accent-color: var(--brand-red-light);
+            background: transparent;
+        }
+        .settings-bar input[type="number"] {
+            width: 46px; padding: 2px 6px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xs);
+            font-size: 0.65rem;
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .settings-bar .val {
+            font-size: 0.6rem; color: var(--text-muted);
+            min-width: 28px; font-weight: 600;
+        }
+
+        /* ===== 结果列表 ===== */
+        .result-list {
+            max-height: 100px; overflow-y: auto;
+            font-size: 0.7rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 10px; padding-top: 6px;
+        }
+        .result-list .item {
+            display: flex; justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px solid var(--border-light);
+            animation: slideIn 0.3s ease;
+        }
+        .result-list .item .time { color: var(--text-muted); font-size: 0.55rem; }
+
+        /* ===== 警报列表 ===== */
+        .alert-list { max-height: 180px; overflow-y: auto; }
+        .alert-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--border-light);
+            animation: slideIn 0.4s cubic-bezier(0.23,1,0.32,1);
+            transition: var(--transition-smooth);
+        }
+        .alert-item:hover {
+            background: var(--bg-card-hover);
+            padding-left: 6px;
+            border-radius: var(--radius-xs);
+        }
+        .alert-item:last-child { border-bottom: none; }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-16px) scale(0.98); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
+        .alert-left { display: flex; align-items: center; gap: 10px; }
+        .alert-level {
+            width: 7px; height: 7px; border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .alert-level.critical { background: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.3); }
+        .alert-level.high { background: #f59e0b; box-shadow: 0 0 12px rgba(245,158,11,0.3); }
+        .alert-content { font-size: 0.7rem; }
+        .alert-content strong { display: block; font-weight: 600; }
+        .alert-content span { font-size: 0.55rem; color: var(--text-muted); }
+        .alert-time { font-size: 0.55rem; color: var(--text-muted); }
+
+        /* ===== 图表 ===== */
+        .chart-container { height: 90px; margin-top: 4px; }
+        .chart-container canvas { width: 100% !important; height: 100% !important; }
+
+        /* ===== 图片预览 ===== */
+        .image-preview-wrapper {
+            position: relative; display: inline-block; width: 100%;
+        }
+        .image-preview {
+            max-width: 100%; max-height: 150px;
+            object-fit: contain;
+            border-radius: var(--radius-xs);
+            margin-top: 6px;
+            display: none;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: var(--transition-spring);
+        }
+        .image-preview.has-result {
+            display: block;
+            border-color: var(--brand-red-light);
+        }
+        .image-preview.has-result:hover {
+            opacity: 0.9; transform: scale(1.02);
+            box-shadow: var(--shadow-md);
+        }
+        .click-hint {
+            display: none;
+            position: absolute; bottom: 16px; left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 3px 14px;
+            border-radius: 16px;
+            font-size: 0.6rem;
+            pointer-events: none;
+        }
+        .image-preview-wrapper:hover .click-hint { display: block; animation: fadeInUp 0.3s ease; }
+
+        /* ===== 历史记录网格 ===== */
+        #historyGrid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            max-height: 260px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .history-item {
+            background: var(--bg-input);
+            border-radius: var(--radius-xs);
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: var(--transition-spring);
+            position: relative;
+        }
+        .history-item:hover {
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--brand-red-light);
+        }
+        .history-item img {
+            width: 100%; aspect-ratio: 1;
+            object-fit: cover; display: block;
+        }
+        .history-item .badge-pos {
+            position: absolute; top: 3px; right: 3px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            color: #fff;
+            border-radius: 10px;
+            padding: 0 6px;
+            font-size: 0.55rem; font-weight: 700;
+        }
+        .history-item .info-bar {
+            padding: 3px 6px;
+            font-size: 0.55rem;
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+        }
+        .history-delete-btn {
+            position: absolute; top: 3px; left: 3px;
+            background: rgba(220,38,38,0.8);
+            border: none; color: #fff;
+            border-radius: 50%;
+            width: 18px; height: 18px;
+            font-size: 0.5rem;
+            cursor: pointer;
+            display: none;
+            align-items: center; justify-content: center;
+            transition: var(--transition-spring);
+        }
+        .history-delete-btn:hover { transform: scale(1.15); background: #dc2626; }
+        .history-item:hover .history-delete-btn { display: flex; animation: fadeInUp 0.2s ease; }
+        .history-empty {
+            color: var(--text-muted); text-align: center;
+            padding: 24px 0; font-size: 0.75rem;
+            grid-column: 1 / -1;
+        }
+
+        .export-options { display: flex; gap: 6px; flex-wrap: wrap; }
+
+        /* ===== 模型选择器 ===== */
+        .model-selector {
+            display: flex; gap: 6px; align-items: center;
+            flex-wrap: wrap;
+            padding: 6px 10px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            margin-top: 6px;
+        }
+        .model-selector select {
+            flex: 1; min-width: 120px;
+            padding: 4px 10px;
+            border-radius: var(--radius-xs);
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.7rem;
+            cursor: pointer; outline: none;
+            font-family: inherit;
+        }
+        .model-selector select:focus { border-color: var(--brand-red-light); }
+        .model-selector .model-status {
+            font-size: 0.6rem; padding: 2px 10px;
+            border-radius: 10px; font-weight: 600;
+        }
+        .model-selector .model-status.loaded {
+            background: rgba(34,197,94,0.12);
+            color: var(--brand-green);
+        }
+        .model-selector .model-status.loading {
+            background: rgba(59,130,246,0.12);
+            color: var(--brand-blue);
+            animation: pulse-dot 0.8s infinite;
+        }
+        .model-selector .model-status.error {
+            background: rgba(239,68,68,0.12);
+            color: #ef4444;
+        }
+
+        .progress-bar {
+            height: 3px; background: var(--border-color);
+            border-radius: 2px; overflow: hidden;
+            margin-top: 6px; display: none;
+        }
+        .progress-bar .fill {
+            height: 100%;
+            background: var(--gradient-fire);
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.23,1,0.32,1);
+        }
+
+        /* ===== 模态框 ===== */
+        .modal {
+            display: none;
+            position: fixed; z-index: 2000; inset: 0;
+            background: var(--bg-overlay);
+            backdrop-filter: blur(20px);
+            justify-content: center; align-items: center;
+        }
+        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn {
+            from { opacity: 0; backdrop-filter: blur(0px); }
+            to { opacity: 1; backdrop-filter: blur(20px); }
+        }
+        .modal-content {
+            max-width: 92%; max-height: 92%;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            position: relative;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            animation: scaleIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        .modal-content img {
+            max-width: 100%; max-height: 70vh;
+            object-fit: contain;
+            border-radius: var(--radius-xs);
+            display: block; margin: 0 auto;
+        }
+        .modal-close {
+            position: absolute; top: 10px; right: 16px;
+            font-size: 1.4rem; color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition-spring);
+            z-index: 10;
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            background: var(--bg-input);
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+            background: var(--border-color);
+            transform: scale(1.15) rotate(90deg);
+        }
+        .modal-info {
+            margin-top: 12px; font-size: 0.75rem;
+            display: flex; gap: 16px; flex-wrap: wrap;
+            justify-content: center;
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+            color: var(--text-secondary);
+        }
+        .modal-info span { display: flex; align-items: center; gap: 6px; }
+        .modal-loading {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-muted);
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+            z-index: 1; pointer-events: none;
+        }
+        .modal-loading.hidden { display: none; }
+        .modal-loading .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--brand-red-light);
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== 调试面板 ===== */
+        .debug-panel {
+            background: var(--bg-input);
+            border-radius: var(--radius-xs);
+            padding: 6px 10px;
+            margin-top: 6px;
+            font-size: 0.6rem; font-family: 'Consolas', monospace;
+            max-height: 90px; overflow-y: auto;
+            display: none;
+            border: 1px solid var(--border-color);
+        }
+        .debug-panel .log-line {
+            padding: 2px 0;
+            border-bottom: 1px solid var(--border-light);
+        }
+        .debug-panel .log-line .time { color: var(--text-muted); }
+        .debug-panel .log-line .fire { color: #ef4444; }
+        .debug-panel .log-line .safe { color: #22c55e; }
+        .debug-panel .log-line .info { color: var(--text-muted); }
+        .debug-panel .log-line .success { color: #22c55e; }
+        .debug-panel .log-line .error { color: #ef4444; }
+        .debug-panel .log-line .warn { color: #f59e0b; }
+
+        /* ===== Toast 通知 ===== */
+        .toast {
+            position: fixed; bottom: 28px; right: 28px;
+            padding: 10px 20px;
+            border-radius: var(--radius-md);
+            color: #fff;
+            font-size: 0.8rem; font-weight: 600;
+            z-index: 3000;
+            animation: slideUp 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+            box-shadow: var(--shadow-lg);
+            max-width: 380px;
+            pointer-events: none;
+        }
+        .toast-success { background: var(--brand-green); }
+        .toast-error { background: #dc2626; }
+        .toast-warning { background: var(--brand-gold); }
+        .toast-info { background: var(--brand-blue); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* ===== 快捷键提示 ===== */
+        .shortcuts {
+            padding: 6px 14px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            font-size: 0.55rem; color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            display: flex; flex-wrap: wrap; gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .shortcuts kbd {
+            background: var(--bg-card);
+            padding: 1px 8px;
+            border-radius: 3px;
+            border: 1px solid var(--border-color);
+            font-size: 0.5rem; font-family: inherit;
+            color: var(--text-secondary);
+        }
+        .shortcuts kbd:hover {
+            background: var(--border-color);
+            transform: scale(1.04);
+        }
+
+        /* ===== 快速卡片 ===== */
+        .quick-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition-spring);
+            position: relative; overflow: hidden;
+        }
+        .quick-card::before {
+            content: ''; position: absolute; top: 0; left: 0;
+            width: 100%; height: 3px;
+            background: var(--gradient-fire);
+            transform: scaleX(0);
+            transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+            transform-origin: left;
+        }
+        .quick-card:hover::before { transform: scaleX(1); }
+        .quick-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--brand-red-light);
+        }
+        .quick-card .icon-wrap {
+            font-size: 2rem; margin-bottom: 8px;
+            transition: var(--transition-smooth);
+        }
+        .quick-card:hover .icon-wrap { transform: scale(1.1) rotate(-3deg); }
+        .quick-card .title { font-weight: 600; font-size: 0.85rem; }
+        .quick-card .desc { font-size: 0.65rem; color: var(--text-muted); }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 1024px) {
+            .sidebar { width: 60px; padding: 14px 8px; }
+            .sidebar-brand .name, .sidebar-brand small, .sidebar-nav .nav-label,
+            .sidebar-nav .nav-item span, .sidebar-nav .nav-item .badge-nav,
+            .sidebar-footer .status-row span, .sidebar-footer .theme-toggle-side span { display: none; }
+            .sidebar-nav .nav-item { justify-content: center; padding: 10px; }
+            .sidebar-nav .nav-item i { font-size: 1.1rem; margin: 0; }
+            .sidebar-footer .theme-toggle-side .toggle-track { width: 28px; height: 16px; }
+            .sidebar-footer .theme-toggle-side .toggle-track .thumb { width: 12px; height: 12px; }
+            [data-theme="dark"] .sidebar-footer .theme-toggle-side .toggle-track .thumb { left: 14px; }
+            .main { margin-left: 60px; padding: 14px 16px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 48px; padding: 10px 4px; }
+            .main { margin-left: 48px; padding: 10px 12px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .topbar-left h1 { font-size: 1rem; }
+            .topbar-left .page-indicator { display: none; }
+            .settings-bar { flex-direction: column; align-items: stretch; }
+            .settings-bar label { justify-content: space-between; }
+            #historyGrid { grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); }
+            .panel { padding: 12px 14px 16px; }
+            .control-bar .btn { font-size: 0.6rem; padding: 4px 10px; }
+            .modal-content { padding: 14px; max-width: 96%; }
+            .modal-content img { max-height: 50vh; }
+            .modal-info { font-size: 0.65rem; gap: 6px; }
+            .export-options { flex-direction: column; width: 100%; }
+            .export-options .btn { justify-content: center; }
+            .shortcuts { font-size: 0.5rem; gap: 4px; }
+            .shortcuts kbd { font-size: 0.45rem; padding: 0 6px; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+            .stat-card { padding: 10px 12px; gap: 10px; }
+            .stat-card .icon { width: 30px; height: 30px; font-size: 0.7rem; }
+            .stat-card .info h4 { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="app">
+    <!-- ===== 侧边栏 ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="icon"><i class="fas fa-fire"></i></div>
+            <div class="name">FlameDetect<small>YOLOv8</small></div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">导航</div>
+            <button class="nav-item active" data-page="homePage" onclick="navigateTo('homePage')"><i class="fas fa-home"></i><span>首页</span></button>
+            <button class="nav-item" data-page="imagePage" onclick="navigateTo('imagePage')"><i class="fas fa-image"></i><span>图片检测</span><span class="badge-nav" id="imageBadge">0</span></button>
+            <button class="nav-item" data-page="videoPage" onclick="navigateTo('videoPage')"><i class="fas fa-video"></i><span>视频监控</span><span class="badge-nav" id="videoBadge">0</span></button>
+            <button class="nav-item" data-page="statsPage" onclick="navigateTo('statsPage')"><i class="fas fa-chart-pie"></i><span>数据统计</span></button>
+            <button class="nav-item" data-page="settingsPage" onclick="navigateTo('settingsPage')"><i class="fas fa-cog"></i><span>系统设置</span></button>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="status-row"><span class="dot online" id="sidebarStatusDot"></span><span id="sidebarStatusText">在线</span><span style="margin-left:auto;font-size:0.55rem;" id="sidebarModel">默认</span></div>
+            <button class="theme-toggle-side" id="themeToggleSide"><span><i class="fas fa-moon"></i></span><span class="toggle-track"><span class="thumb"></span></span></button>
+        </div>
+    </aside>
+
+    <!-- ===== 主内容 ===== -->
+    <main class="main">
+        <div class="topbar">
+            <div class="topbar-left"><h1 id="pageTitle">首页 <span>Dashboard</span></h1><span class="page-indicator" id="pageIndicator">概览</span></div>
+            <div class="topbar-right"><span class="app-badge" id="appModeBadge">⚡ 桌面版</span><span class="model-badge"><i class="fas fa-cube"></i> <span id="topModelName">默认</span></span><span class="clock" id="topClock">--:--:--</span></div>
+        </div>
+
+        <!-- ===== 首页 ===== -->
+        <div class="page active" id="homePage">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="icon red"><i class="fas fa-fire"></i></div><div class="info"><h4 id="homeAlerts">0</h4><p>火情报警</p></div></div>
+                <div class="stat-card"><div class="icon blue"><i class="fas fa-image"></i></div><div class="info"><h4 id="homeImages">0</h4><p>图片检测</p></div></div>
+                <div class="stat-card"><div class="icon purple"><i class="fas fa-video"></i></div><div class="info"><h4 id="homeFrames">0</h4><p>视频帧数</p></div></div>
+                <div class="stat-card"><div class="icon gold"><i class="fas fa-camera-retro"></i></div><div class="info"><h4 id="homeSnapshots">0</h4><p>截图数量</p></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px;">
+                <div class="quick-card" onclick="navigateTo('imagePage')"><div class="icon-wrap" style="color:var(--brand-blue);"><i class="fas fa-image"></i></div><div class="title">图片检测</div><div class="desc">上传图片识别火焰</div></div>
+                <div class="quick-card" onclick="navigateTo('videoPage')"><div class="icon-wrap" style="color:var(--brand-red-light);"><i class="fas fa-video"></i></div><div class="title">视频监控</div><div class="desc">实时流火焰检测</div></div>
+                <div class="quick-card" onclick="navigateTo('statsPage')"><div class="icon-wrap" style="color:var(--brand-purple);"><i class="fas fa-chart-bar"></i></div><div class="title">数据统计</div><div class="desc">检测数据分析</div></div>
+            </div>
+            <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-bell"></i> 最近警报</div><span class="sub" id="homeAlertCount">0 条</span></div><div class="alert-list" id="homeAlertList"><div style="color:var(--text-muted);text-align:center;padding:12px 0;font-size:0.75rem;">暂无警报</div></div></div>
+        </div>
+
+        <!-- ===== 图片检测 ===== -->
+        <div class="page" id="imagePage">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="icon red"><i class="fas fa-fire"></i></div><div class="info"><h4 id="imgAlerts">0</h4><p>火情</p></div></div>
+                <div class="stat-card"><div class="icon blue"><i class="fas fa-image"></i></div><div class="info"><h4 id="imgCount">0</h4><p>检测数</p></div></div>
+                <div class="stat-card"><div class="icon green"><i class="fas fa-chart-line"></i></div><div class="info"><h4 id="imgAcc">98.5%</h4><p>置信度</p></div></div>
+                <div class="stat-card"><div class="icon gold"><i class="fas fa-database"></i></div><div class="info"><h4 id="imgStorage">0</h4><p>存储</p></div></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="title"><i class="fas fa-cloud-upload-alt"></i> 上传检测</div><span class="sub">点击结果图查看详情</span></div>
+                <div class="upload-zone" id="imageDropZone">
+                    <div class="icon-big"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <p>点击或拖拽上传图片</p><span class="hint">支持 JPG / PNG</span>
+                    <div class="image-preview-wrapper"><img id="imagePreview" class="image-preview" alt="预览" /><div class="click-hint"><i class="fas fa-search-plus"></i> 点击查看详情</div></div>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display:none;" />
+                </div>
+                <div class="control-bar">
+                    <button class="btn btn-primary" id="detectImageBtn" disabled><i class="fas fa-search"></i> 检测</button>
+                    <button class="btn btn-ghost" id="clearImageBtn"><i class="fas fa-undo"></i> 清空</button>
+                    <button class="btn btn-debug" id="debugToggleBtn"><i class="fas fa-bug"></i> 调试</button>
+                    <span id="imageResult" style="font-size:0.7rem;color:var(--text-muted);margin-left:auto;">等待检测</span>
+                </div>
+                <div class="debug-panel" id="debugPanel"><div style="font-weight:bold;color:var(--text-muted);margin-bottom:3px;font-size:0.65rem;">📊 检测日志</div><div id="debugLog"></div></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="title"><i class="fas fa-history"></i> 检测历史</div><span class="sub" id="historyCount">0 张</span></div>
+                <div id="historyGrid"><div class="history-empty">暂无历史记录</div></div>
+                <div class="control-bar" style="justify-content:center;margin-top:10px;flex-wrap:wrap;">
+                    <button class="btn btn-ghost btn-sm" id="clearHistoryBtn"><i class="fas fa-trash"></i> 清空历史</button>
+                    <div class="export-options">
+                        <button class="btn btn-success btn-sm" id="exportAllJpgBtn"><i class="fas fa-images"></i> 导出JPG</button>
+                        <button class="btn btn-ghost btn-sm" id="exportHistoryBtn"><i class="fas fa-file-code"></i> 导出JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 视频监控 ===== -->
+        <div class="page" id="videoPage">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="icon red"><i class="fas fa-fire"></i></div><div class="info"><h4 id="vidAlerts">0</h4><p>火情</p></div></div>
+                <div class="stat-card"><div class="icon blue"><i class="fas fa-video"></i></div><div class="info"><h4 id="vidFrames">0</h4><p>帧数</p></div></div>
+                <div class="stat-card"><div class="icon purple"><i class="fas fa-microchip"></i></div><div class="info"><h4 id="vidFps">0</h4><p>FPS</p></div></div>
+                <div class="stat-card"><div class="icon gold"><i class="fas fa-camera-retro"></i></div><div class="info"><h4 id="vidSnapshots">0</h4><p>截图</p></div></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="title"><i class="fas fa-camera"></i> 实时监控</div><span class="sub" id="videoStatusText">等待启动</span></div>
+                <div class="video-wrapper" id="videoWrapper">
+                    <video id="videoInput" autoplay muted playsinline style="display:none;"></video>
+                    <canvas id="detectionCanvas"></canvas>
+                    <div class="overlay-status"><span class="dot off" id="statusDot"></span><span id="statusText">等待开始</span></div>
+                    <div class="record-indicator" id="recordIndicator"><span class="rec-dot"></span> 录制中</div>
+                    <button class="fullscreen-btn" id="fullscreenBtn" title="全屏"><i class="fas fa-expand"></i><i class="fas fa-compress"></i></button>
+                    <div id="progressContainer" style="display:none;position:absolute;bottom:50px;left:0;right:0;padding:0 12px;z-index:10;">
+                        <div style="display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.6);backdrop-filter:blur(12px);padding:4px 12px;border-radius:24px;">
+                            <span style="color:#fff;font-size:0.6rem;font-family:monospace;min-width:40px;" id="currentTimeDisplay">00:00</span>
+                            <input type="range" id="videoProgress" min="0" max="100" value="0" style="flex:1;height:3px;accent-color:#e11d48;background:rgba(255,255,255,0.15);border-radius:2px;cursor:pointer;-webkit-appearance:none;appearance:none;" />
+                            <span style="color:#fff;font-size:0.6rem;font-family:monospace;min-width:40px;" id="durationDisplay">00:00</span>
+                            <button class="play-btn" id="playPauseBtn" style="background:rgba(255,255,255,0.08);border:none;color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition-spring);"><i class="fas fa-play" style="font-size:0.6rem;"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="control-bar">
+                    <button class="btn btn-primary" id="startCameraBtn"><i class="fas fa-play"></i> 摄像头</button>
+                    <button class="btn btn-gold" id="stopCameraBtn"><i class="fas fa-stop"></i> 停止</button>
+                    <button class="btn btn-purple" id="pauseVideoBtn"><i class="fas fa-pause"></i> 暂停</button>
+                    <button class="btn btn-success" id="toggleDetectBtn"><i class="fas fa-crosshairs"></i> 检测: 开</button>
+                    <button class="btn btn-save" id="snapshotBtn"><i class="fas fa-camera-retro"></i> 自动截图</button>
+                    <button class="btn btn-record" id="recordVideoBtn"><i class="fas fa-circle"></i> 录制</button>
+                    <input type="file" id="localVideoInput" accept="video/*" style="display:none;" />
+                    <button class="btn btn-ghost" id="localVideoBtn"><i class="fas fa-file-video"></i> 本地</button>
+                    <span style="display:none;align-items:center;gap:6px;padding:2px 10px;background:var(--bg-input);border-radius:16px;border:1px solid var(--border-color);font-size:0.65rem;color:var(--text-secondary);" id="recordingProgress">
+                        <i class="fas fa-spinner fa-spin" style="color:#e11d48;"></i>
+                        <span id="recordingTime">00:00</span>
+                        <span style="width:50px;height:3px;background:var(--border-color);border-radius:2px;overflow:hidden;"><span id="recordingBar" style="height:100%;background:#e11d48;width:0%;transition:width 0.5s;display:block;"></span></span>
+                        <span id="recordingSize">0 KB</span>
+                    </span>
+                </div>
+                <div class="settings-bar">
+                    <label><i class="fas fa-sliders-h"></i> 阈值: <input type="range" id="confThreshold" min="0.05" max="0.9" step="0.01" value="0.25" /><span class="val" id="thresholdVal">0.25</span></label>
+                    <label><i class="fas fa-sync-alt"></i> 截图间隔: <input type="number" id="intervalInput" value="2" min="0.5" max="60" step="0.5" />s</label>
+                    <label><i class="fas fa-gauge-high"></i> 检测间隔: <input type="range" id="detectInterval" min="10" max="500" step="10" value="150" /><span class="val" id="intervalVal">150ms</span></label>
+                    <span id="saveStatus" style="font-size:0.55rem;color:var(--text-muted);"></span>
+                </div>
+                <div class="result-list" id="resultList"><div class="item" style="color:var(--text-muted);justify-content:center;border:none;padding:5px 0;">等待检测结果...</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-bell"></i> 实时警报</div><span class="sub" id="alertCount">0 条</span></div><div class="alert-list" id="alertList"><div style="color:var(--text-muted);text-align:center;padding:10px 0;font-size:0.75rem;">暂无警报</div></div></div>
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-chart-bar"></i> 检测趋势</div><span class="sub">近60秒</span></div><div class="chart-container"><canvas id="trendChart"></canvas></div></div>
+            </div>
+            <div class="shortcuts">
+                <span><kbd>Space</kbd> 暂停</span>
+                <span><kbd>D</kbd> 检测开关</span>
+                <span><kbd>⌘S</kbd> 截图切换</span>
+                <span><kbd>⌘R</kbd> 录制</span>
+                <span><kbd>⌘L</kbd> 调试</span>
+                <span><kbd>F</kbd> 全屏</span>
+                <span><kbd>ESC</kbd> 关闭</span>
+                <span><kbd>←/→</kbd> ±5s</span>
+            </div>
+        </div>
+
+        <!-- ===== 数据统计 ===== -->
+        <div class="page" id="statsPage">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-fire"></i> 火情统计</div><span class="sub">总览</span></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:14px;text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:#e11d48;" id="statTotalAlerts">0</div><div style="font-size:0.6rem;color:var(--text-muted);">总火情</div></div>
+                        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:14px;text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:#f59e0b;" id="statTodayAlerts">0</div><div style="font-size:0.6rem;color:var(--text-muted);">今日火情</div></div>
+                        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:14px;text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:#3b82f6;" id="statImages">0</div><div style="font-size:0.6rem;color:var(--text-muted);">图片检测</div></div>
+                        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:14px;text-align:center;"><div style="font-size:1.8rem;font-weight:700;color:#8b5cf6;" id="statFrames">0</div><div style="font-size:0.6rem;color:var(--text-muted);">视频帧数</div></div>
+                    </div>
+                </div>
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-cube"></i> 模型信息</div><span class="sub">当前状态</span></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.75rem;">
+                        <div><span style="color:var(--text-muted);">模型名称</span><br><strong id="statModelName">加载中...</strong></div>
+                        <div><span style="color:var(--text-muted);">推理速度</span><br><strong id="statInferenceSpeed">--</strong></div>
+                        <div><span style="color:var(--text-muted);">服务状态</span><br><strong id="statServerStatus" style="color:var(--brand-green);">在线</strong></div>
+                        <div><span style="color:var(--text-muted);">检测总数</span><br><strong id="statTotalDetections">0</strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><div class="title"><i class="fas fa-brain"></i> 模型管理</div><span class="sub">切换 / 上传</span></div>
+                <div class="model-selector">
+                    <select id="modelSelect"><option value="">加载中...</option></select>
+                    <button class="btn btn-primary btn-sm" id="applyModelBtn"><i class="fas fa-check"></i> 切换</button>
+                    <button class="btn btn-ghost btn-sm" id="refreshModelListBtn"><i class="fas fa-sync"></i> 刷新</button>
+                    <span class="model-status loaded" id="modelStatusIndicator">● 已加载</span>
+                </div>
+                <div class="upload-zone" id="modelDropZone" style="margin-top:8px;padding:14px;">
+                    <div class="icon-big"><i class="fas fa-cloud-upload-alt"></i></div>
+                    <p>拖拽或点击上传模型</p><span class="hint">.pt / .onnx</span>
+                    <div class="file-name" id="modelFileName" style="font-weight:600;font-size:0.75rem;margin-top:3px;color:var(--text-primary);">未选择文件</div>
+                    <div class="progress-bar" id="uploadProgress"><div class="fill" id="progressFill"></div></div>
+                    <input type="file" id="modelFileInput" accept=".pt,.onnx,.pth,.weights" style="display:none;" />
+                </div>
+                <div style="margin-top:8px;padding:8px 12px;background:var(--bg-input);border-radius:var(--radius-sm);font-size:0.7rem;border:1px solid var(--border-color);display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;">
+                    <div><i class="fas fa-cube"></i> 模型: <strong id="currentModelName">加载中...</strong></div>
+                    <div><i class="fas fa-tags"></i> 类别: <span id="modelClasses">-</span></div>
+                    <div><i class="fas fa-server"></i> 服务: <span id="serverStatus" style="color:var(--brand-green);">在线</span></div>
+                    <div><i class="fas fa-gauge-high"></i> 推理: <span id="inferenceSpeed">--</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== 系统设置 ===== -->
+        <div class="page" id="settingsPage">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-palette"></i> 主题设置</div><span class="sub">界面外观</span></div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 4px;">
+                        <span style="font-size:0.8rem;">暗色主题</span>
+                        <button class="theme-toggle-side" id="themeToggleSettings" style="display:flex;align-items:center;gap:10px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:var(--text-secondary);">
+                            <span class="toggle-track" style="width:40px;height:22px;border-radius:12px;background:var(--border-color);position:relative;transition:var(--transition-smooth);flex-shrink:0;">
+                                <span class="thumb" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:var(--transition-spring);box-shadow:0 2px 4px rgba(0,0,0,0.2);"></span>
+                            </span>
+                        </button>
+                    </div>
+                    <div style="margin-top:8px;padding:8px 12px;background:var(--bg-input);border-radius:var(--radius-sm);font-size:0.7rem;color:var(--text-muted);"><i class="fas fa-info-circle"></i> 主题切换会保存到浏览器本地</div>
+                </div>
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-sliders-h"></i> 检测参数</div><span class="sub">默认配置</span></div>
+                    <div style="display:grid;gap:10px;">
+                        <label style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-secondary);"><span>置信度阈值</span><span style="display:flex;align-items:center;gap:10px;"><input type="range" id="settingsThreshold" min="0.05" max="0.9" step="0.01" value="0.25" style="width:120px;accent-color:var(--brand-red-light);" /><span class="val" id="settingsThresholdVal" style="font-weight:600;color:var(--text-primary);min-width:36px;">0.25</span></span></label>
+                        <label style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-secondary);"><span>检测间隔</span><span style="display:flex;align-items:center;gap:10px;"><input type="range" id="settingsDetectInterval" min="10" max="500" step="10" value="150" style="width:120px;accent-color:var(--brand-red-light);" /><span class="val" id="settingsIntervalVal" style="font-weight:600;color:var(--text-primary);min-width:44px;">150ms</span></span></label>
+                        <label style="display:flex;justify-content:space-between;align-items:center;font-size:0.75rem;color:var(--text-secondary);"><span>自动截图间隔</span><span style="display:flex;align-items:center;gap:10px;"><input type="number" id="settingsIntervalInput" value="2" min="0.5" max="60" step="0.5" style="width:60px;padding:3px 8px;border:1px solid var(--border-color);border-radius:var(--radius-xs);font-size:0.7rem;background:var(--bg-card);color:var(--text-primary);" /><span style="font-size:0.65rem;color:var(--text-muted);">秒</span></span></label>
+                    </div>
+                </div>
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-database"></i> 数据管理</div><span class="sub">历史记录</span></div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        <button class="btn btn-ghost btn-sm" id="settingsClearHistory"><i class="fas fa-trash"></i> 清空历史</button>
+                        <button class="btn btn-success btn-sm" id="settingsExportAll"><i class="fas fa-images"></i> 导出全部JPG</button>
+                        <button class="btn btn-ghost btn-sm" id="settingsExportJson"><i class="fas fa-file-code"></i> 导出JSON</button>
+                    </div>
+                    <div style="margin-top:8px;padding:8px 12px;background:var(--bg-input);border-radius:var(--radius-sm);font-size:0.7rem;color:var(--text-muted);"><i class="fas fa-info-circle"></i> 历史记录: <strong id="settingsHistoryCount">0</strong> 张</div>
+                </div>
+                <div class="panel"><div class="panel-header"><div class="title"><i class="fas fa-info-circle"></i> 系统信息</div><span class="sub">版本</span></div>
+                    <div style="display:grid;gap:4px;font-size:0.75rem;color:var(--text-secondary);">
+                        <div><span style="color:var(--text-muted);">系统</span> YOLOv8 火焰检测系统</div>
+                        <div><span style="color:var(--text-muted);">版本</span> v2.0</div>
+                        <div><span style="color:var(--text-muted);">运行环境</span> <span id="settingsRuntime" style="color:var(--brand-cyan);">桌面应用</span></div>
+                        <div><span style="color:var(--text-muted);">API</span> <span id="settingsApiStatus" style="color:var(--brand-green);">在线</span></div>
+                        <div><span style="color:var(--text-muted);">模型</span> <span id="settingsModelName">加载中...</span></div>
+                    </div>
+                    <div style="margin-top:10px;padding:8px 12px;background:var(--bg-input);border-radius:var(--radius-sm);font-size:0.65rem;color:var(--text-muted);border:1px solid var(--border-color);">
+                        <i class="fas fa-terminal"></i> 后端状态: <span id="backendStatusText" style="color:var(--brand-green);">运行中</span>
+                        <button class="btn btn-ghost btn-xs" id="restartBackendBtn" style="margin-left:8px;"><i class="fas fa-sync"></i> 重启后端</button>
+                    </div>
+                </div>
+            </div>
+            <div class="shortcuts" style="margin-top:18px;">
+                <span><kbd>⌘K</kbd> 搜索功能</span>
+                <span><kbd>⌘,</kbd> 打开设置</span>
+                <span><kbd>ESC</kbd> 关闭弹窗</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- ===== 模态框 ===== -->
+<div class="modal" id="imageModal">
+    <div class="modal-content">
+        <span class="modal-close" id="modalClose">&times;</span>
+        <div style="position:relative;display:flex;justify-content:center;align-items:center;min-height:40px;">
+            <div class="modal-loading" id="modalLoading"><div class="spinner"></div><span>加载中...</span></div>
+            <img id="modalImage" src="" alt="检测详情" style="opacity:0;" />
+        </div>
+        <div class="modal-info" id="modalInfo">
+            <span><i class="fas fa-fire" style="color:#e11d48;"></i> 火焰: <strong id="modalFireCount">0</strong> 处</span>
+            <span><i class="fas fa-clock"></i> 时间: <span id="modalTime">--</span></span>
+            <span><i class="fas fa-tag"></i> 模型: <span id="modalModel">--</span></span>
+            <span><i class="fas fa-bounding-box"></i> 框: <span id="modalBoxCount">0</span></span>
+        </div>
+    </div>
+</div>
+
+<!-- ===== 库 ===== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- ================================================================
+     完整 JavaScript - 包含所有原始功能
+     ================================================================ -->
+<script>
+// ================================================================
+// 环境检测
+// ================================================================
+const isElectron = typeof window !== 'undefined' && window.process && window.process.type === 'renderer';
+const API_BASE = isElectron ? 'http://localhost:8000' : 'http://localhost:8000';
+if (isElectron) { document.getElementById('appModeBadge').textContent = '⚡ 桌面版'; document.getElementById('settingsRuntime').textContent = '桌面应用 (Electron)'; console.log('🔌 运行在 Electron 环境中'); }
+
+// ================================================================
+// 配置 & 状态
+// ================================================================
+const MAX_ALERTS = 20, MAX_RESULTS = 30, CHART_POINTS = 60, MAX_HISTORY = 50;
+const State = {
+    stream: null, isDetecting: true, isRunning: false, animationId: null,
+    frameCount: 0, alertCount: 0, imageCount: 0, lastFrameTime: 0, fpsCounter: 0, currentFPS: 0,
+    currentImageFile: null, isPaused: false, lastResult: null, debugEnabled: false,
+    snapshotCount: 0, isAutoSnapshot: false, snapshotTimer: null, isSaving: false,
+    currentSource: '未知源', chartData: [], chart: null, lastDetectionTime: 0,
+    detectionInterval: 150, currentModel: null, availableModels: [], isSwitching: false,
+    isModalOpen: false, videoPausedForModal: false,
+    lastDetectionResult: { boxes: [], fireCount: 0, hasResult: false },
+    isRecording: false, isProcessing: false, mediaRecorder: null, recordedChunks: [],
+    recordingStartTime: 0, recordingTimer: null, recordingSize: 0,
+    totalDetections: 0, todayAlerts: 0, isBackendReady: false,
+    currentVideoFile: null, isLocalVideo: false, videoUrl: null,
+    wasRunning: false, savedPausedState: false, savedCurrentTime: 0, savedDuration: 0,
+    hasSavedState: false, isRestoring: false, savedDetectState: true,
+};
+
+// ================================================================
+// DOM 引用
+// ================================================================
+const $ = id => document.getElementById(id);
+const dom = {
+    video: videoInput, canvas: detectionCanvas, ctx: detectionCanvas.getContext('2d'),
+    pageTitle: pageTitle, pageIndicator: pageIndicator, topModelName: topModelName,
+    topClock: topClock, sidebarStatusDot: sidebarStatusDot, sidebarStatusText: sidebarStatusText,
+    sidebarModel: sidebarModel, themeToggleSide: themeToggleSide,
+    imageBadge: imageBadge, videoBadge: videoBadge,
+    homeAlerts: homeAlerts, homeImages: homeImages, homeFrames: homeFrames, homeSnapshots: homeSnapshots,
+    homeAlertCount: homeAlertCount, homeAlertList: homeAlertList,
+    imgAlerts: imgAlerts, imgCount: imgCount, imgAcc: imgAcc, imgStorage: imgStorage,
+    imageDropZone: imageDropZone, imageFileInput: imageFileInput, imagePreview: imagePreview,
+    detectImageBtn: detectImageBtn, clearImageBtn: clearImageBtn, imageResult: imageResult,
+    debugToggleBtn: debugToggleBtn, debugPanel: debugPanel, debugLog: debugLog,
+    historyGrid: historyGrid, historyCount: historyCount,
+    clearHistoryBtn: clearHistoryBtn, exportAllJpgBtn: exportAllJpgBtn, exportHistoryBtn: exportHistoryBtn,
+    vidAlerts: vidAlerts, vidFrames: vidFrames, vidFps: vidFps, vidSnapshots: vidSnapshots,
+    videoStatusText: videoStatusText, videoWrapper: videoWrapper, fullscreenBtn: fullscreenBtn,
+    statusDot: statusDot, statusText: statusText, recordIndicator: recordIndicator,
+    startCameraBtn: startCameraBtn, stopCameraBtn: stopCameraBtn, pauseVideoBtn: pauseVideoBtn,
+    toggleDetectBtn: toggleDetectBtn, snapshotBtn: snapshotBtn, recordVideoBtn: recordVideoBtn,
+    localVideoBtn: localVideoBtn, localVideoInput: localVideoInput,
+    confThreshold: confThreshold, thresholdVal: thresholdVal,
+    intervalInput: intervalInput, detectInterval: detectInterval, intervalVal: intervalVal,
+    saveStatus: saveStatus, resultList: resultList,
+    alertList: alertList, alertCount: alertCount,
+    recordingProgress: recordingProgress, recordingTime: recordingTime,
+    recordingBar: recordingBar, recordingSize: recordingSize,
+    trendChart: trendChart, progressContainer: progressContainer,
+    videoProgress: videoProgress, currentTimeDisplay: currentTimeDisplay,
+    durationDisplay: durationDisplay, playPauseBtn: playPauseBtn,
+    statTotalAlerts: statTotalAlerts, statTodayAlerts: statTodayAlerts,
+    statImages: statImages, statFrames: statFrames,
+    statModelName: statModelName, statInferenceSpeed: statInferenceSpeed,
+    statServerStatus: statServerStatus, statTotalDetections: statTotalDetections,
+    modelSelect: modelSelect, applyModelBtn: applyModelBtn, refreshModelListBtn: refreshModelListBtn,
+    modelStatusIndicator: modelStatusIndicator,
+    modelDropZone: modelDropZone, modelFileInput: modelFileInput, modelFileName: modelFileName,
+    uploadProgress: uploadProgress, progressFill: progressFill,
+    currentModelName: currentModelName, modelClasses: modelClasses,
+    serverStatus: serverStatus, inferenceSpeed: inferenceSpeed,
+    settingsThreshold: settingsThreshold, settingsThresholdVal: settingsThresholdVal,
+    settingsDetectInterval: settingsDetectInterval, settingsIntervalVal: settingsIntervalVal,
+    settingsIntervalInput: settingsIntervalInput,
+    settingsClearHistory: settingsClearHistory, settingsExportAll: settingsExportAll,
+    settingsExportJson: settingsExportJson, settingsHistoryCount: settingsHistoryCount,
+    settingsApiStatus: settingsApiStatus, settingsModelName: settingsModelName,
+    settingsRuntime: settingsRuntime, backendStatusText: backendStatusText,
+    restartBackendBtn: restartBackendBtn, themeToggleSettings: themeToggleSettings,
+    modal: imageModal, modalImage: modalImage, modalFireCount: modalFireCount,
+    modalTime: modalTime, modalModel: modalModel, modalBoxCount: modalBoxCount,
+    modalClose: modalClose, modalLoading: modalLoading,
+};
+
+// ================================================================
+// 主题切换
+// ================================================================
+function setTheme(isDark) {
+    if (isDark) { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('theme', 'dark'); document.querySelectorAll('.toggle-track .thumb').forEach(el => el.style.left = '18px'); }
+    else { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme', 'light'); document.querySelectorAll('.toggle-track .thumb').forEach(el => el.style.left = '2px'); }
+}
+try { const saved = localStorage.getItem('theme'); if (saved === 'dark') setTheme(true); } catch(e) {}
+dom.themeToggleSide.addEventListener('click', () => { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; setTheme(!isDark); });
+dom.themeToggleSettings.addEventListener('click', () => { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; setTheme(!isDark); });
+
+// ================================================================
+// 页面导航
+// ================================================================
+const pages = ['homePage', 'imagePage', 'videoPage', 'statsPage', 'settingsPage'];
+const pageTitles = { homePage: '首页 <span>Dashboard</span>', imagePage: '图片 <span>检测</span>', videoPage: '视频 <span>监控</span>', statsPage: '数据 <span>统计</span>', settingsPage: '系统 <span>设置</span>' };
+const pageIndicators = { homePage: '概览', imagePage: '上传 · 识别 · 分析', videoPage: '实时 · 录制 · 截图', statsPage: '检测数据总览', settingsPage: '配置 · 管理' };
+let currentPage = 'homePage';
+
+function updatePauseUI(isPaused) {
+    if (isPaused) { dom.pauseVideoBtn.innerHTML = '<i class="fas fa-play"></i> 继续'; dom.pauseVideoBtn.className = 'btn btn-success'; dom.playPauseBtn.innerHTML = '<i class="fas fa-play" style="font-size:0.6rem;"></i>'; dom.statusDot.className = 'dot paused'; dom.statusText.textContent = '⏸️ 已暂停'; dom.videoStatusText.textContent = '⏸️ 已暂停'; State.isPaused = true; }
+    else { dom.pauseVideoBtn.innerHTML = '<i class="fas fa-pause"></i> 暂停'; dom.pauseVideoBtn.className = 'btn btn-purple'; dom.playPauseBtn.innerHTML = '<i class="fas fa-pause" style="font-size:0.6rem;"></i>'; dom.statusDot.className = 'dot green'; dom.statusText.textContent = '▶️ 继续监控'; dom.videoStatusText.textContent = '▶️ 监控中'; State.isPaused = false; }
+}
+function updateDetectUI(isDetecting) {
+    if (isDetecting) { dom.toggleDetectBtn.innerHTML = '<i class="fas fa-crosshairs"></i> 检测: 开'; dom.toggleDetectBtn.className = 'btn btn-success'; State.isDetecting = true; }
+    else { dom.toggleDetectBtn.innerHTML = '<i class="fas fa-crosshairs"></i> 检测: 关'; dom.toggleDetectBtn.className = 'btn btn-ghost'; State.isDetecting = false; }
+}
+
+function navigateTo(pageId) {
+    if (currentPage === 'videoPage' && pageId !== 'videoPage') {
+        if (State.isRunning) {
+            if (dom.video.duration) { State.savedCurrentTime = dom.video.currentTime; State.savedDuration = dom.video.duration; }
+            State.hasSavedState = true; State.wasRunning = true; State.isLocalVideo = !!State.videoUrl;
+            State.savedPausedState = State.isPaused; State.savedDetectState = State.isDetecting;
+            if (State.animationId) { cancelAnimationFrame(State.animationId); State.animationId = null; }
+            dom.statusDot.className = 'dot paused'; dom.statusText.textContent = '⏸️ 后台运行中';
+            dom.videoStatusText.textContent = '⏸️ 后台运行中'; dom.playPauseBtn.innerHTML = '<i class="fas fa-play" style="font-size:0.6rem;"></i>';
+            addDebugLog('📤 离开视频页面，保存进度: ' + State.savedCurrentTime.toFixed(1) + 's, 检测: ' + (State.savedDetectState ? '开' : '关'), 'info');
+        }
+    }
+    if (pageId === 'videoPage' && currentPage !== 'videoPage') {
+        State.isRestoring = true;
+        if (State.wasRunning && State.isLocalVideo && State.videoUrl) {
+            dom.video.src = State.videoUrl; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; dom.progressContainer.style.display = 'block';
+            dom.video.onloadedmetadata = function() {
+                if (State.hasSavedState && State.savedDuration > 0) {
+                    dom.video.currentTime = Math.min(State.savedCurrentTime, State.savedDuration - 0.1);
+                    dom.currentTimeDisplay.textContent = formatVideoTime(dom.video.currentTime);
+                    dom.durationDisplay.textContent = formatVideoTime(dom.video.duration);
+                    var progress = (dom.video.currentTime / dom.video.duration) * 100;
+                    dom.videoProgress.value = progress;
+                    dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)';
+                }
+            };
+            dom.video.load();
+            setTimeout(function() {
+                if (dom.video.readyState >= 2) dom.video.pause();
+                else dom.video.addEventListener('canplay', function pauseOnCanPlay() { dom.video.pause(); dom.video.removeEventListener('canplay', pauseOnCanPlay); });
+                updatePauseUI(true); dom.playPauseBtn.innerHTML = '<i class="fas fa-play" style="font-size:0.6rem;"></i>';
+                dom.statusText.textContent = '⏸️ 已暂停'; dom.videoStatusText.textContent = '⏸️ 已暂停';
+                updateDetectUI(false); State.isRunning = true; State.wasRunning = false;
+                State.lastFrameTime = performance.now(); State.fpsCounter = 0; State.isRestoring = false;
+                addDebugLog('🔄 恢复视频，进度: ' + State.savedCurrentTime.toFixed(1) + 's，自动暂停，检测关闭', 'info');
+                showToast('🔄 视频已恢复，暂停状态，检测已关闭', 'info');
+                if (State.animationId) cancelAnimationFrame(State.animationId);
+                videoLoop();
+            }, 150);
+        } else if (State.wasRunning && State.stream) {
+            dom.video.srcObject = State.stream; dom.video.style.display = 'block'; dom.canvas.style.display = 'block';
+            dom.video.pause(); updatePauseUI(true); dom.playPauseBtn.innerHTML = '<i class="fas fa-play" style="font-size:0.6rem;"></i>';
+            dom.statusText.textContent = '⏸️ 已暂停'; dom.videoStatusText.textContent = '⏸️ 已暂停';
+            updateDetectUI(false); State.isRunning = true; State.wasRunning = false;
+            State.lastFrameTime = performance.now(); State.fpsCounter = 0; State.isRestoring = false;
+            addDebugLog('🔄 恢复摄像头，自动暂停，检测关闭', 'info');
+            showToast('🔄 摄像头已恢复，暂停状态，检测已关闭', 'info');
+            if (State.animationId) cancelAnimationFrame(State.animationId);
+            videoLoop();
+        } else { State.wasRunning = false; State.hasSavedState = false; State.isRestoring = false; dom.playPauseBtn.innerHTML = '<i class="fas fa-play" style="font-size:0.6rem;"></i>'; }
+    }
+    pages.forEach(function(id) { document.getElementById(id).classList.toggle('active', id === pageId); });
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(function(el) { el.classList.toggle('active', el.dataset.page === pageId); });
+    dom.pageTitle.innerHTML = pageTitles[pageId] || '页面';
+    dom.pageIndicator.textContent = pageIndicators[pageId] || '';
+    currentPage = pageId;
+    if (pageId === 'videoPage') updateVideoStats();
+    if (pageId === 'statsPage') updateStatsPage();
+    if (pageId === 'settingsPage') updateSettingsPage();
+}
+
+// ================================================================
+// 工具函数
+// ================================================================
+function formatTime(date) { date = date || new Date(); return date.toTimeString().split(' ')[0]; }
+function formatFileName(prefix) { prefix = prefix || 'capture'; var now = new Date(); var ts = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0') + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0') + String(now.getSeconds()).padStart(2,'0'); State.snapshotCount++; return prefix + '_' + ts + '_' + String(State.snapshotCount).padStart(4,'0') + '.jpg'; }
+function getThreshold() { return parseFloat(dom.confThreshold.value) || 0.25; }
+function getInterval() { return parseFloat(dom.intervalInput.value) || 2; }
+function getDetectInterval() { return parseInt(dom.detectInterval.value) || 150; }
+function truncateText(text, max) { max = max || 20; return text.length > max ? text.substring(0, max-2) + '…' : text; }
+function formatDuration(seconds) { var mins = Math.floor(seconds/60); var secs = Math.floor(seconds%60); return String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0'); }
+function formatFileSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB'; return (bytes/1048576).toFixed(2) + ' MB'; }
+function showToast(message, type) { type = type || 'info'; var colors = { success: '#22c55e', error: '#dc2626', warning: '#f59e0b', info: '#3b82f6' }; var toast = document.createElement('div'); toast.className = 'toast toast-' + type; toast.textContent = message; toast.style.background = colors[type] || colors.info; document.body.appendChild(toast); setTimeout(function(){ toast.style.opacity = '0'; toast.style.transform = 'translateY(20px) scale(0.95)'; toast.style.transition = 'all 0.3s ease'; setTimeout(function(){ toast.remove(); }, 300); }, 3000); }
+function formatVideoTime(seconds) { if (isNaN(seconds) || !isFinite(seconds) || seconds < 0) return '00:00'; var mins = Math.floor(seconds/60); var secs = Math.floor(seconds%60); return String(mins).padStart(2,'0') + ':' + String(secs).padStart(2,'0'); }
+
+// ================================================================
+// 调试日志
+// ================================================================
+function addDebugLog(message, type) { type = type || 'info'; if (!State.debugEnabled) return; var time = formatTime(); var div = document.createElement('div'); div.className = 'log-line'; div.innerHTML = '<span class="time">[' + time + ']</span> <span class="' + type + '">' + message + '</span>'; dom.debugLog.prepend(div); while (dom.debugLog.children.length > 50) dom.debugLog.removeChild(dom.debugLog.lastChild); }
+dom.debugToggleBtn.addEventListener('click', function() {
+    State.debugEnabled = !State.debugEnabled;
+    dom.debugPanel.style.display = State.debugEnabled ? 'block' : 'none';
+    dom.debugToggleBtn.classList.toggle('active');
+    dom.debugToggleBtn.innerHTML = State.debugEnabled ? '<i class="fas fa-bug"></i> 调试: 开' : '<i class="fas fa-bug"></i> 调试';
+    if (State.debugEnabled) addDebugLog('🔍 调试模式已开启', 'info');
+});
+
+// ================================================================
+// API 调用
+// ================================================================
+async function apiRequest(endpoint, method, body, timeout) {
+    method = method || 'GET'; timeout = timeout || 30000;
+    var options = { method: method };
+    if (body && !(body instanceof FormData)) { options.headers = { 'Content-Type': 'application/json' }; options.body = JSON.stringify(body); }
+    else if (body) { options.body = body; }
+    var controller = new AbortController(); options.signal = controller.signal;
+    var timeoutId = setTimeout(function(){ controller.abort(); }, timeout);
+    try {
+        var response = await fetch(API_BASE + endpoint, options);
+        clearTimeout(timeoutId);
+        if (!response.ok) { var errorText = await response.text(); throw new Error('HTTP ' + response.status + ': ' + (errorText || response.statusText)); }
+        return await response.json();
+    } catch(err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') throw new Error('请求超时，请检查后端服务是否正常运行');
+        throw err;
+    }
+}
+async function detectFile(file) {
+    var formData = new FormData();
+    formData.append('file', file);
+    if (State.currentModel) formData.append('model_name', State.currentModel);
+    formData.append('conf_threshold', getThreshold());
+    return await apiRequest('/predict', 'POST', formData, 60000);
+}
+
+// ================================================================
+// 模型管理
+// ================================================================
+async function fetchModelList() {
+    try { var result = await apiRequest('/models/list'); State.availableModels = result.models || []; updateModelSelect(); addDebugLog('📋 获取模型列表: ' + State.availableModels.length + ' 个', 'info'); return State.availableModels; }
+    catch(err) { addDebugLog('❌ 获取模型列表失败: ' + err.message, 'error'); try { var info = await apiRequest('/model_info'); if (info.status === 'loaded' && info.model_name) { State.availableModels = info.available_models || [info.model_name]; updateModelSelect(); } } catch(e) {} return []; }
+}
+function updateModelSelect() {
+    var select = dom.modelSelect; var currentValue = select.value; select.innerHTML = '';
+    if (State.availableModels.length === 0) { var option = document.createElement('option'); option.value = ''; option.textContent = '无可用模型'; select.appendChild(option); select.disabled = true; dom.applyModelBtn.disabled = true; return; }
+    select.disabled = false; dom.applyModelBtn.disabled = false;
+    var defaultOption = document.createElement('option'); defaultOption.value = 'default'; defaultOption.textContent = '📌 默认模型'; select.appendChild(defaultOption);
+    State.availableModels.forEach(function(model) { var option = document.createElement('option'); option.value = model; var displayName = model.length > 30 ? model.substring(0,28) + '…' : model; option.textContent = '🧠 ' + displayName; select.appendChild(option); });
+    if (currentValue && (currentValue === 'default' || State.availableModels.includes(currentValue))) select.value = currentValue;
+    else if (State.currentModel && State.availableModels.includes(State.currentModel)) select.value = State.currentModel;
+    updateModelStatusIndicator();
+}
+function updateModelStatusIndicator() {
+    var indicator = dom.modelStatusIndicator; var selected = dom.modelSelect.value;
+    if (selected === 'default') { indicator.textContent = '● 默认模型'; indicator.className = 'model-status loaded'; }
+    else if (selected && State.availableModels.includes(selected)) { indicator.textContent = '● ' + (selected.length > 20 ? selected.substring(0,18) + '…' : selected); indicator.className = 'model-status loaded'; }
+    else if (selected) { indicator.textContent = '● 未加载'; indicator.className = 'model-status error'; }
+    else { indicator.textContent = '● 未选择'; indicator.className = 'model-status error'; }
+}
+async function switchModel(modelName) {
+    if (!modelName) { addDebugLog('⚠️ 未选择模型', 'warn'); return false; }
+    if (State.isSwitching) { addDebugLog('⏳ 正在切换中，请稍候...', 'warn'); return false; }
+    State.isSwitching = true; var select = dom.modelSelect; var indicator = dom.modelStatusIndicator;
+    select.disabled = true; dom.applyModelBtn.disabled = true; dom.applyModelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 加载中...';
+    indicator.textContent = '⏳ 加载中...'; indicator.className = 'model-status loading';
+    try {
+        if (modelName === 'default') { addDebugLog('🔄 正在切换到默认模型...', 'info'); await apiRequest('/load_default', 'POST'); State.currentModel = null; addDebugLog('✅ 切换到默认模型成功', 'success'); }
+        else { addDebugLog('🔄 正在切换到模型: ' + modelName + '...', 'info'); await apiRequest('/load_model', 'POST', { model_name: modelName }); State.currentModel = modelName; addDebugLog('✅ 切换到模型成功: ' + modelName, 'success'); }
+        await new Promise(function(r){ setTimeout(r, 300); }); await refreshModelInfo();
+        var displayName = modelName === 'default' ? '默认模型' : modelName;
+        indicator.textContent = '● ' + displayName; indicator.className = 'model-status loaded';
+        dom.modelSelect.value = modelName; dom.topModelName.textContent = modelName === 'default' ? '默认' : modelName;
+        dom.sidebarModel.textContent = modelName === 'default' ? '默认' : modelName;
+        dom.currentModelName.textContent = modelName === 'default' ? '默认模型' : modelName;
+        dom.statModelName.textContent = modelName === 'default' ? '默认模型' : modelName;
+        dom.settingsModelName.textContent = modelName === 'default' ? '默认模型' : modelName;
+        updateModelStatusIndicator(); showToast('✅ 模型切换成功: ' + displayName, 'success'); return true;
+    } catch(err) {
+        var errorMsg = err.message || '未知错误'; addDebugLog('❌ 切换模型失败: ' + errorMsg, 'error');
+        try { var info = await apiRequest('/model_info'); if (info.status === 'loaded' && info.model_name) { State.currentModel = info.model_name; dom.currentModelName.textContent = info.model_name; dom.topModelName.textContent = info.model_name; dom.sidebarModel.textContent = info.model_name; dom.statModelName.textContent = info.model_name; dom.settingsModelName.textContent = info.model_name; indicator.textContent = '● ' + info.model_name; indicator.className = 'model-status loaded'; if (State.availableModels.includes(info.model_name)) dom.modelSelect.value = info.model_name; addDebugLog('🔄 状态已与后端同步: ' + info.model_name, 'success'); showToast('⚠️ 部分失败，已同步到: ' + info.model_name, 'warning'); return true; } } catch(syncErr) {}
+        var shortMsg = errorMsg.length > 25 ? errorMsg.substring(0,22) + '…' : errorMsg;
+        indicator.textContent = '❌ ' + shortMsg; indicator.className = 'model-status error';
+        showToast('❌ 模型切换失败: ' + errorMsg, 'error'); return false;
+    } finally { State.isSwitching = false; select.disabled = false; dom.applyModelBtn.disabled = false; dom.applyModelBtn.innerHTML = '<i class="fas fa-check"></i> 切换'; }
+}
+async function refreshModelInfo() {
+    try { var info = await apiRequest('/model_info'); if (info.status === 'loaded') { var name = info.model_name || '未知'; dom.currentModelName.textContent = name; dom.topModelName.textContent = name; dom.sidebarModel.textContent = name; dom.statModelName.textContent = name; dom.settingsModelName.textContent = name; dom.modelClasses.textContent = Object.values(info.classes || {}).join(', ') || '-'; dom.inferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; dom.statInferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; if (info.model_name && !State.availableModels.includes(info.model_name)) { State.availableModels.push(info.model_name); updateModelSelect(); } } else { dom.currentModelName.textContent = '未加载'; dom.topModelName.textContent = '未加载'; dom.sidebarModel.textContent = '未加载'; dom.statModelName.textContent = '未加载'; dom.settingsModelName.textContent = '未加载'; dom.modelClasses.textContent = '-'; } return info; }
+    catch(err) { addDebugLog('❌ 获取模型信息失败: ' + err.message, 'error'); dom.currentModelName.textContent = '获取失败'; return null; }
+}
+dom.applyModelBtn.addEventListener('click', async function() { var selected = dom.modelSelect.value; if (!selected) { showToast('请选择一个模型', 'warning'); return; } await switchModel(selected); });
+dom.refreshModelListBtn.addEventListener('click', async function() {
+    dom.refreshModelListBtn.disabled = true; dom.refreshModelListBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    try { await fetchModelList(); await refreshModelInfo(); showToast('✅ 模型列表已刷新', 'success'); addDebugLog('🔄 刷新模型列表完成', 'success'); }
+    catch(err) { showToast('❌ 刷新失败: ' + err.message, 'error'); addDebugLog('❌ 刷新失败: ' + err.message, 'error'); }
+    finally { dom.refreshModelListBtn.disabled = false; dom.refreshModelListBtn.innerHTML = '<i class="fas fa-sync"></i> 刷新'; }
+});
+dom.modelDropZone.addEventListener('click', function(){ dom.modelFileInput.click(); });
+dom.modelDropZone.addEventListener('dragover', function(e){ e.preventDefault(); dom.modelDropZone.classList.add('dragover'); });
+dom.modelDropZone.addEventListener('dragleave', function(){ dom.modelDropZone.classList.remove('dragover'); });
+dom.modelDropZone.addEventListener('drop', async function(e){ e.preventDefault(); dom.modelDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) { var file = e.dataTransfer.files[0]; dom.modelFileName.textContent = '📄 ' + file.name; await uploadModel(file); } });
+dom.modelFileInput.addEventListener('change', async function(e){ if (e.target.files.length) { var file = e.target.files[0]; dom.modelFileName.textContent = '📄 ' + file.name; await uploadModel(file); } dom.modelFileInput.value = ''; });
+async function uploadModel(file) {
+    var formData = new FormData(); formData.append('file', file);
+    dom.uploadProgress.style.display = 'block'; dom.progressFill.style.width = '30%';
+    dom.modelFileName.textContent = '⏳ 上传中...';
+    try {
+        var response = await fetch(API_BASE + '/upload_model', { method: 'POST', body: formData });
+        dom.progressFill.style.width = '100%';
+        if (!response.ok) { var error = await response.text(); throw new Error('HTTP ' + response.status + ': ' + error); }
+        var result = await response.json();
+        dom.modelFileName.textContent = '✅ ' + file.name;
+        addDebugLog('✅ 模型上传成功: ' + (result.model_name || file.name), 'success');
+        showToast('✅ 模型上传成功: ' + file.name, 'success');
+        await fetchModelList(); await refreshModelInfo();
+        if (result.model_name) { dom.modelSelect.value = result.model_name; setTimeout(async function(){ await switchModel(result.model_name); }, 300); }
+    } catch(err) { addDebugLog('❌ 上传失败: ' + err.message, 'error'); dom.modelFileName.textContent = '❌ 上传失败'; showToast('❌ 上传失败: ' + err.message, 'error'); }
+    finally { setTimeout(function(){ dom.uploadProgress.style.display = 'none'; dom.progressFill.style.width = '0%'; }, 1500); }
+}
+
+// ================================================================
+// 健康检查 & 时钟
+// ================================================================
+async function checkServer() {
+    try { var response = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(5000) }); if (response.ok) { var data = await response.json(); dom.serverStatus.textContent = '在线'; dom.serverStatus.style.color = '#22c55e'; dom.statServerStatus.textContent = '在线'; dom.statServerStatus.style.color = '#22c55e'; dom.settingsApiStatus.textContent = '在线'; dom.settingsApiStatus.style.color = '#22c55e'; dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线'; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; State.isBackendReady = true; if (data.model_name) { dom.currentModelName.textContent = data.model_name; dom.topModelName.textContent = data.model_name; dom.sidebarModel.textContent = data.model_name; dom.statModelName.textContent = data.model_name; dom.settingsModelName.textContent = data.model_name; } } }
+    catch(err) { dom.serverStatus.textContent = '离线'; dom.serverStatus.style.color = '#ef4444'; dom.statServerStatus.textContent = '离线'; dom.statServerStatus.style.color = '#ef4444'; dom.settingsApiStatus.textContent = '离线'; dom.settingsApiStatus.style.color = '#ef4444'; dom.sidebarStatusDot.className = 'dot offline'; dom.sidebarStatusText.textContent = '离线'; dom.backendStatusText.textContent = '❌ 离线'; dom.backendStatusText.style.color = '#ef4444'; State.isBackendReady = false; }
+}
+setTimeout(checkServer, 2000); setInterval(checkServer, 10000);
+function updateClock() { dom.topClock.textContent = formatTime(); }
+updateClock(); setInterval(updateClock, 1000);
+
+// ================================================================
+// 历史记录
+// ================================================================
+var HistoryState = { records: [], maxRecords: 50 };
+function loadHistory() { try { var saved = localStorage.getItem('detection_history'); if (saved) { HistoryState.records = JSON.parse(saved); renderHistory(); } } catch(e) { console.error('加载历史失败:', e); } }
+function saveHistory() { try { localStorage.setItem('detection_history', JSON.stringify(HistoryState.records)); } catch(e) {} }
+function addHistoryRecord(imageData, result) {
+    var finalImageData = imageData;
+    if (typeof imageData === 'string' && imageData.startsWith('data:image')) {
+        if (!imageData.startsWith('data:image/jpeg')) {
+            try { var img = new Image(); img.src = imageData; var canvas = document.createElement('canvas'); canvas.width = img.naturalWidth || 640; canvas.height = img.naturalHeight || 480; var ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.drawImage(img,0,0); finalImageData = canvas.toDataURL('image/jpeg',0.92); } catch(e) { finalImageData = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e11d48"/%3E%3Ctext x="50" y="55" font-size="40" text-anchor="middle" fill="white"%3E🔥%3C/text%3E%3C/svg%3E'; }
+        }
+    }
+    if (!finalImageData || finalImageData === '' || finalImageData === '🔥') { finalImageData = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e11d48"/%3E%3Ctext x="50" y="55" font-size="40" text-anchor="middle" fill="white"%3E🔥%3C/text%3E%3C/svg%3E'; }
+    var record = { id: Date.now(), timestamp: formatTime(), date: new Date().toLocaleDateString(), imageData: finalImageData, fireCount: result.fireCount || 0, totalBoxes: result.totalBoxes || 0, model: result.model || '默认', threshold: result.threshold || 0.25, fileName: State.currentSource || '未知' };
+    HistoryState.records.unshift(record);
+    if (HistoryState.records.length > HistoryState.maxRecords) HistoryState.records.pop();
+    saveHistory(); renderHistory(); dom.imageBadge.textContent = HistoryState.records.length; dom.settingsHistoryCount.textContent = HistoryState.records.length;
+}
+function deleteHistoryRecord(id) { HistoryState.records = HistoryState.records.filter(function(r){ return r.id !== id; }); saveHistory(); renderHistory(); dom.imageBadge.textContent = HistoryState.records.length; dom.settingsHistoryCount.textContent = HistoryState.records.length; }
+function clearAllHistory() { if (HistoryState.records.length === 0) return; if (confirm('确定要清空所有历史记录吗？')) { HistoryState.records = []; saveHistory(); renderHistory(); dom.imageBadge.textContent = 0; dom.settingsHistoryCount.textContent = 0; addDebugLog('🗑️ 清空所有历史记录', 'info'); showToast('✅ 历史记录已清空', 'success'); } }
+function renderHistory() {
+    var grid = dom.historyGrid; var count = dom.historyCount; count.textContent = HistoryState.records.length + ' 张';
+    if (HistoryState.records.length === 0) { grid.innerHTML = '<div class="history-empty">暂无历史记录</div>'; return; }
+    var html = '';
+    HistoryState.records.forEach(function(record) {
+        var imgSrc = record.imageData; if (!imgSrc || imgSrc === '' || imgSrc === '🔥') { imgSrc = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e11d48"/%3E%3Ctext x="50" y="55" font-size="40" text-anchor="middle" fill="white"%3E🔥%3C/text%3E%3C/svg%3E'; }
+        var isFire = record.fireCount > 0; var badge = isFire ? '🔥' : '✅'; var badgeColor = isFire ? '#e11d48' : '#22c55e';
+        html += '<div class="history-item" data-id="' + record.id + '"><img src="' + imgSrc + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%23333\'/%3E%3Ctext x=\'50\' y=\'55\' font-size=\'40\' text-anchor=\'middle\' fill=\'white\'%3E❓%3C/text%3E%3C/svg%3E\'" /><span class="badge-pos">' + badge + '</span><div class="info-bar"><span style="color:' + badgeColor + ';font-weight:600;">' + (isFire ? '🔥 ' + record.fireCount + '处' : '✅ 安全') + '</span><span style="color:var(--text-muted);">' + record.timestamp + '</span></div><button class="history-delete-btn" data-id="' + record.id + '"><i class="fas fa-times"></i></button></div>';
+    });
+    grid.innerHTML = html;
+    grid.querySelectorAll('.history-item').forEach(function(item) {
+        var id = parseInt(item.dataset.id); var record = HistoryState.records.find(function(r){ return r.id === id; });
+        item.addEventListener('click', function(e) { if (e.target.closest('.history-delete-btn')) return; if (record) { dom.modalImage.src = record.imageData; dom.modalFireCount.textContent = record.fireCount || 0; dom.modalTime.textContent = record.timestamp || '--'; dom.modalModel.textContent = record.model || '默认'; dom.modalBoxCount.textContent = record.totalBoxes || 0; dom.modalLoading.classList.add('hidden'); dom.modalImage.style.opacity = '1'; openModal(); } });
+        var deleteBtn = item.querySelector('.history-delete-btn'); if (deleteBtn) { deleteBtn.addEventListener('click', function(e) { e.stopPropagation(); deleteHistoryRecord(parseInt(this.dataset.id)); }); }
+    });
+    dom.imageBadge.textContent = HistoryState.records.length; dom.settingsHistoryCount.textContent = HistoryState.records.length;
+}
+dom.clearHistoryBtn.addEventListener('click', clearAllHistory); dom.settingsClearHistory.addEventListener('click', clearAllHistory);
+function exportAllJpg() {
+    if (HistoryState.records.length === 0) { showToast('没有历史记录可导出', 'warning'); return; }
+    if (HistoryState.records.length === 1) { var record = HistoryState.records[0]; var link = document.createElement('a'); link.href = record.imageData; link.download = 'detection_' + record.timestamp.replace(/:/g, '-') + '.jpg'; document.body.appendChild(link); link.click(); document.body.removeChild(link); showToast('✅ 图片已导出', 'success'); return; }
+    var downloadCount = 0; var total = HistoryState.records.length;
+    HistoryState.records.forEach(function(record, index) {
+        setTimeout(function() {
+            var link = document.createElement('a'); link.href = record.imageData; var fileName = 'detection_' + record.timestamp.replace(/:/g, '-') + '_' + (record.fireCount > 0 ? 'fire' : 'safe') + '.jpg'; link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); downloadCount++; if (downloadCount === total) { showToast('✅ 已导出 ' + total + ' 张图片', 'success'); addDebugLog('📤 导出 ' + total + ' 张JPG图片', 'success'); }
+        }, index * 300);
+    });
+    showToast('⏳ 开始导出 ' + total + ' 张图片...', 'info');
+}
+function exportHistoryJson() {
+    if (HistoryState.records.length === 0) { showToast('没有历史记录可导出', 'warning'); return; }
+    var data = { exportTime: formatTime(), totalRecords: HistoryState.records.length, records: HistoryState.records.map(function(r){ return { timestamp: r.timestamp, date: r.date, fireCount: r.fireCount, totalBoxes: r.totalBoxes, model: r.model, threshold: r.threshold, fileName: r.fileName, imageData: r.imageData }; }) };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); var url = URL.createObjectURL(blob); var link = document.createElement('a'); link.href = url; link.download = 'detection_history_' + formatTime().replace(/:/g, '-') + '.json'; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); addDebugLog('📤 导出历史记录 (' + HistoryState.records.length + ' 条)', 'success'); showToast('✅ 导出 ' + HistoryState.records.length + ' 条历史记录', 'success');
+}
+dom.exportAllJpgBtn.addEventListener('click', exportAllJpg); dom.settingsExportAll.addEventListener('click', exportAllJpg);
+dom.exportHistoryBtn.addEventListener('click', exportHistoryJson); dom.settingsExportJson.addEventListener('click', exportHistoryJson);
+loadHistory();
+
+// ================================================================
+// 模态框
+// ================================================================
+function openModal() {
+    dom.modal.classList.add('active'); dom.modal.style.display = 'flex'; State.isModalOpen = true;
+    if (State.isRunning && !State.isPaused) {
+        if (dom.video.readyState >= 2) { var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480; var tempCanvas = document.createElement('canvas'); tempCanvas.width = w; tempCanvas.height = h; var tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(dom.video, 0, 0, w, h); State.modalFrameData = tempCanvas.toDataURL('image/jpeg', 0.7); }
+        dom.video.pause(); State.videoPausedForModal = true; updatePauseUI(true); dom.statusText.textContent = '🔍 查看详情中'; addDebugLog('🖼️ 查看图片详情（暂停视频）', 'info');
+    }
+}
+function closeModal() {
+    dom.modal.classList.remove('active'); dom.modal.style.display = 'none'; State.isModalOpen = false; State.modalFrameData = null;
+    if (State.isRunning && State.videoPausedForModal) { State.videoPausedForModal = false; dom.video.play().catch(function(){}); updatePauseUI(false); State.lastDetectionTime = Date.now(); addDebugLog('▶️ 恢复视频播放', 'info'); }
+}
+dom.modalClose.addEventListener('click', closeModal);
+dom.modal.addEventListener('click', function(e){ if (e.target === dom.modal) closeModal(); });
+document.addEventListener('keydown', function(e){ if (e.code === 'Escape' && State.isModalOpen) { closeModal(); e.preventDefault(); } });
+
+// ================================================================
+// 图片检测
+// ================================================================
+dom.imageDropZone.addEventListener('click', function(e) {
+    var target = e.target; var isImagePreview = target === dom.imagePreview || target.closest('.image-preview-wrapper') === dom.imagePreview.parentElement;
+    if (isImagePreview && dom.imagePreview.classList.contains('has-result')) return;
+    if (target === dom.imagePreview || target.closest('.image-preview-wrapper')) { if (!dom.imagePreview.classList.contains('has-result')) dom.imageFileInput.click(); return; }
+    dom.imageFileInput.click();
+});
+dom.imageDropZone.addEventListener('dragover', function(e){ e.preventDefault(); dom.imageDropZone.classList.add('dragover'); });
+dom.imageDropZone.addEventListener('dragleave', function(){ dom.imageDropZone.classList.remove('dragover'); });
+dom.imageDropZone.addEventListener('drop', function(e){ e.preventDefault(); dom.imageDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]); });
+dom.imageFileInput.addEventListener('change', function(e){ if (e.target.files.length) handleImageFile(e.target.files[0]); });
+function handleImageFile(file) {
+    State.currentImageFile = file; State.currentSource = file.name;
+    var reader = new FileReader();
+    reader.onload = function(e) { dom.imagePreview.src = e.target.result; dom.imagePreview.className = 'image-preview'; dom.imagePreview.style.display = 'block'; dom.imageResult.textContent = '已加载，点击检测'; dom.imageResult.style.color = 'var(--text-secondary)'; dom.detectImageBtn.disabled = false; State.lastResult = null; addDebugLog('📎 加载图片: ' + file.name, 'info'); };
+    reader.readAsDataURL(file);
+}
+dom.clearImageBtn.addEventListener('click', function() {
+    State.currentImageFile = null; dom.imagePreview.src = ''; dom.imagePreview.className = 'image-preview'; dom.imagePreview.style.display = 'none'; dom.imageFileInput.value = ''; dom.imageResult.textContent = '等待检测'; dom.imageResult.style.color = 'var(--text-muted)'; dom.detectImageBtn.disabled = true; State.lastResult = null; addDebugLog('🗑️ 清空图片', 'info');
+});
+dom.imagePreview.addEventListener('click', function(e) {
+    e.stopPropagation(); e.preventDefault();
+    if (State.lastResult && dom.imagePreview.classList.contains('has-result')) {
+        dom.modalImage.src = dom.imagePreview.src; dom.modalFireCount.textContent = State.lastResult.fireCount || 0; dom.modalTime.textContent = State.lastResult.time || '--'; dom.modalModel.textContent = State.lastResult.model || '默认'; dom.modalBoxCount.textContent = State.lastResult.totalBoxes || 0; dom.modalLoading.classList.add('hidden'); dom.modalImage.style.opacity = '1'; openModal(); addDebugLog('🖼️ 查看图片详情', 'info');
+    }
+});
+dom.detectImageBtn.addEventListener('click', async function() {
+    if (!State.currentImageFile) { showToast('请先上传图片', 'warning'); return; }
+    dom.detectImageBtn.disabled = true; dom.detectImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+    dom.imageResult.textContent = '⏳ 检测中...'; dom.imageResult.style.color = '#f59e0b';
+    try {
+        var start = performance.now(); var result = await detectFile(State.currentImageFile); var elapsed = (performance.now() - start).toFixed(0);
+        var boxes = result.boxes || []; var threshold = getThreshold();
+        addDebugLog('📊 检测完成: ' + boxes.length + ' 个目标, 耗时 ' + elapsed + 'ms', 'info');
+        var fireBoxes = boxes.filter(function(b){ return b[4] >= threshold; }); var fireCount = fireBoxes.length;
+        if (result.inference_time_ms) { dom.inferenceSpeed.textContent = result.inference_time_ms + 'ms'; dom.statInferenceSpeed.textContent = result.inference_time_ms + 'ms'; }
+        var img = new Image();
+        img.onload = function() {
+            var c = document.createElement('canvas'); c.width = img.naturalWidth || img.width; c.height = img.naturalHeight || img.height;
+            var ctx2 = c.getContext('2d'); ctx2.drawImage(img, 0, 0, c.width, c.height);
+            boxes.forEach(function(box) { var x1 = box[0], y1 = box[1], x2 = box[2], y2 = box[3], conf = box[4], clsId = box[5]; if (conf < threshold) return; var cx1 = Math.max(0, Math.min(c.width, x1)); var cy1 = Math.max(0, Math.min(c.height, y1)); var cx2 = Math.max(0, Math.min(c.width, x2)); var cy2 = Math.max(0, Math.min(c.height, y2)); var label = result.names ? result.names[String(clsId)] : 'fire'; ctx2.strokeStyle = '#e11d48'; ctx2.lineWidth = Math.max(2, Math.min(c.width,c.height) * 0.005); ctx2.shadowColor = 'rgba(225,29,72,0.4)'; ctx2.shadowBlur = 16; ctx2.strokeRect(cx1, cy1, cx2-cx1, cy2-cy1); ctx2.shadowBlur = 0; var text = label + ' ' + (conf*100).toFixed(1) + '%'; var fontSize = Math.max(12, Math.min(c.width,c.height) * 0.025); ctx2.font = 'bold ' + fontSize + 'px Segoe UI, sans-serif'; var tw = ctx2.measureText(text).width; var th = Math.max(22, Math.min(c.width,c.height) * 0.035); var labelY = Math.max(0, cy1 - th); var grad = ctx2.createLinearGradient(cx1, labelY, cx1+tw+16, labelY+th); grad.addColorStop(0,'rgba(225,29,72,0.9)'); grad.addColorStop(1,'rgba(190,18,60,0.9)'); ctx2.fillStyle = grad; ctx2.shadowColor = 'rgba(225,29,72,0.3)'; ctx2.shadowBlur = 12; ctx2.fillRect(cx1, labelY, tw+16, th); ctx2.shadowBlur = 0; ctx2.fillStyle = '#ffffff'; ctx2.textBaseline = 'top'; ctx2.fillText(text, cx1+8, labelY + (th-fontSize)/2); ctx2.textBaseline = 'alphabetic'; });
+            var imageDataUrl = c.toDataURL('image/jpeg', 0.92);
+            dom.imagePreview.src = imageDataUrl; dom.imagePreview.className = 'image-preview has-result'; dom.imagePreview.style.display = 'block';
+            State.lastResult = { fireCount: fireCount, time: formatTime(), model: result.model || '默认', boxes: fireBoxes, totalBoxes: boxes.length, threshold: threshold };
+            addHistoryRecord(imageDataUrl, State.lastResult);
+            State.totalDetections++; dom.statTotalDetections.textContent = State.totalDetections;
+            if (fireCount > 0) { State.alertCount += fireCount; State.todayAlerts += fireCount; dom.imageResult.innerHTML = '🔥 检测到 ' + fireCount + ' 处火焰 (点击查看)'; dom.imageResult.style.color = '#e11d48'; dom.imageResult.style.fontWeight = 'bold'; addAlert(fireCount, '图片', State.currentSource); addDebugLog('✅ 检测到 ' + fireCount + ' 处火焰', 'fire'); showToast('🔥 检测到 ' + fireCount + ' 处火焰！', 'error'); }
+            else if (boxes.length > 0) { dom.imageResult.innerHTML = '⚠️ 检测到 ' + boxes.length + ' 个目标，置信度低于阈值 (' + threshold + ')'; dom.imageResult.style.color = '#f59e0b'; dom.imageResult.style.fontWeight = 'bold'; addDebugLog('⚠️ 检测到 ' + boxes.length + ' 个目标但低于阈值', 'warn'); }
+            else { dom.imageResult.innerHTML = '✅ 安全 - 未检测到火焰'; dom.imageResult.style.color = '#22c55e'; dom.imageResult.style.fontWeight = 'bold'; addDebugLog('✅ 未检测到火焰', 'safe'); }
+            State.imageCount++; dom.imgCount.textContent = State.imageCount; dom.homeImages.textContent = State.imageCount; dom.imgStorage.textContent = State.snapshotCount;
+            var timeStr = formatTime(); var item = document.createElement('div'); item.className = 'item';
+            if (fireCount > 0) item.innerHTML = '<span style="color:#e11d48;">🔥 ' + fireCount + ' 处火焰</span><span class="time">' + timeStr + '</span>';
+            else if (boxes.length > 0) item.innerHTML = '<span style="color:#f59e0b;">⚠️ ' + boxes.length + '个目标低于阈值</span><span class="time">' + timeStr + '</span>';
+            else item.innerHTML = '<span style="color:#22c55e;">✅ 安全</span><span class="time">' + timeStr + '</span>';
+            dom.resultList.prepend(item); while (dom.resultList.children.length > MAX_RESULTS) dom.resultList.removeChild(dom.resultList.lastChild);
+        };
+        var reader = new FileReader(); reader.onload = function(e) { img.src = e.target.result; }; reader.readAsDataURL(State.currentImageFile);
+    } catch(err) { dom.imageResult.textContent = '❌ 检测失败: ' + err.message; dom.imageResult.style.color = '#ef4444'; addDebugLog('❌ 检测失败: ' + err.message, 'error'); showToast('❌ 检测失败: ' + err.message, 'error'); }
+    finally { dom.detectImageBtn.disabled = false; dom.detectImageBtn.innerHTML = '<i class="fas fa-search"></i> 检测'; }
+});
+
+// ================================================================
+// 警报
+// ================================================================
+function addAlert(fireCount, sourceType, fileName) {
+    var displayName = fileName || State.currentSource || '未知源';
+    if (!displayName || displayName === '🔥' || displayName === '%F0%9F%94%A5' || displayName.startsWith('%')) displayName = '火焰检测';
+    var truncated = truncateText(displayName, 18); var time = formatTime().slice(0,5);
+    State.alertCount += fireCount; State.todayAlerts += fireCount;
+    dom.homeAlerts.textContent = State.alertCount; dom.imgAlerts.textContent = State.alertCount; dom.vidAlerts.textContent = State.alertCount;
+    dom.alertCount.textContent = State.alertCount + ' 条'; dom.homeAlertCount.textContent = State.alertCount + ' 条';
+    dom.videoBadge.textContent = State.alertCount; dom.statTotalAlerts.textContent = State.alertCount; dom.statTodayAlerts.textContent = State.todayAlerts;
+    var level = 'critical'; var levelLabel = '危险'; if (fireCount <= 1) { level = 'high'; levelLabel = '警告'; } if (fireCount >= 3) { level = 'critical'; levelLabel = '危急'; }
+    var item = document.createElement('div'); item.className = 'alert-item';
+    item.innerHTML = '<div class="alert-left"><div class="alert-level ' + level + '"></div><div class="alert-content"><strong>📄 ' + truncated + '</strong><span>' + sourceType + ' · ' + fireCount + '处火焰 · ' + levelLabel + '</span></div></div><div class="alert-time">' + time + '</div>';
+    dom.alertList.prepend(item); dom.homeAlertList.prepend(item.cloneNode(true));
+    while (dom.alertList.children.length > MAX_ALERTS) dom.alertList.removeChild(dom.alertList.lastChild);
+    while (dom.homeAlertList.children.length > MAX_ALERTS) dom.homeAlertList.removeChild(dom.homeAlertList.lastChild);
+    var empty1 = dom.alertList.querySelector('div[style]'); if (empty1 && dom.alertList.children.length > 1) empty1.remove();
+    var empty2 = dom.homeAlertList.querySelector('div[style]'); if (empty2 && dom.homeAlertList.children.length > 1) empty2.remove();
+    if ('Notification' in window && Notification.permission === 'granted') { new Notification('🔥 火焰检测报警', { body: '检测到 ' + fireCount + ' 处火焰！来源: ' + truncated }); }
+}
+if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+
+// ================================================================
+// 图表
+// ================================================================
+function initChart() {
+    if (State.chart) State.chart.destroy();
+    var ctx = dom.trendChart.getContext('2d');
+    State.chart = new Chart(ctx, { type: 'line', data: { labels: Array(CHART_POINTS).fill(''), datasets: [{ label: '火焰数量', data: Array(CHART_POINTS).fill(0), borderColor: '#e11d48', backgroundColor: 'rgba(225,29,72,0.08)', fill: true, tension: 0.4, pointRadius: 0, borderWidth: 2.5 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 0, max: 5, grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { stepSize: 1 } }, x: { display: false } } } });
+}
+function updateChart(value) { State.chartData.push(value || 0); if (State.chartData.length > CHART_POINTS) State.chartData.shift(); if (State.chart) { State.chart.data.datasets[0].data = State.chartData; State.chart.update('none'); } }
+setTimeout(initChart, 100);
+
+// ================================================================
+// 视频核心功能
+// ================================================================
+function drawBoxesFromCache(boxes) {
+    if (!boxes || !boxes.length) return 0;
+    var threshold = getThreshold(); var count = 0;
+    boxes.forEach(function(box) { var x1 = box[0], y1 = box[1], x2 = box[2], y2 = box[3], conf = box[4]; if (conf < threshold) return; count++; dom.ctx.shadowColor = 'rgba(225,29,72,0.4)'; dom.ctx.shadowBlur = 16; dom.ctx.strokeStyle = '#e11d48'; dom.ctx.lineWidth = 2.5; dom.ctx.strokeRect(x1, y1, x2-x1, y2-y1); dom.ctx.shadowBlur = 0; var text = '火焰 ' + (conf*100).toFixed(1) + '%'; dom.ctx.font = 'bold 13px Segoe UI, sans-serif'; var tw = dom.ctx.measureText(text).width; var grad = dom.ctx.createLinearGradient(x1, y1-28, x1+tw+16, y1-2); grad.addColorStop(0,'rgba(225,29,72,0.9)'); grad.addColorStop(1,'rgba(190,18,60,0.9)'); dom.ctx.fillStyle = grad; dom.ctx.shadowColor = 'rgba(225,29,72,0.3)'; dom.ctx.shadowBlur = 12; dom.ctx.fillRect(x1, y1-28, tw+16, 26); dom.ctx.shadowBlur = 0; dom.ctx.fillStyle = '#ffffff'; dom.ctx.fillText(text, x1+8, y1-8); });
+    return count;
+}
+async function detectFrame() {
+    try { var blob = await new Promise(function(resolve, reject){ dom.canvas.toBlob(function(blob){ if (blob) resolve(blob); else reject(new Error('Canvas toBlob failed')); }, 'image/jpeg', 0.85); }); var file = new File([blob], 'frame.jpg', { type: 'image/jpeg' }); return await detectFile(file); }
+    catch(err) { addDebugLog('⚠️ 帧检测失败: ' + err.message, 'warn'); return { boxes: [], error: err.message }; }
+}
+
+// ================================================================
+// 视频主循环
+// ================================================================
+var isDraggingProgress = false;
+async function videoLoop() {
+    if (!State.isRunning) return;
+    if (State.isRestoring) { State.animationId = requestAnimationFrame(videoLoop); return; }
+    var loopStart = performance.now();
+    if (State.isModalOpen) {
+        if (dom.video.readyState >= 2 && !State.isPaused) { var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480; if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; } dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height); }
+        var loopEnd2 = performance.now(); State.fpsCounter++; if (loopEnd2 - State.lastFrameTime >= 1000) { State.currentFPS = State.fpsCounter; dom.vidFps.textContent = State.currentFPS; State.fpsCounter = 0; State.lastFrameTime = loopEnd2; }
+        State.animationId = requestAnimationFrame(videoLoop); return;
+    }
+    if (dom.video.readyState >= 2 && !State.isPaused) {
+        var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
+        if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
+        dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+        if (State.lastDetectionResult.hasResult && State.lastDetectionResult.boxes.length > 0) drawBoxesFromCache(State.lastDetectionResult.boxes);
+        if (dom.video.ended && dom.video.duration > 0) { dom.statusDot.className = 'dot off'; dom.statusText.textContent = '⏹️ 视频已结束'; dom.videoStatusText.textContent = '⏹️ 已结束'; State.isRunning = false; if (State.animationId) { cancelAnimationFrame(State.animationId); State.animationId = null; } dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48, #e11d48)'; addDebugLog('⏹️ 视频播放结束，检测已停止', 'info'); showToast('⏹️ 视频已结束，检测停止', 'info'); State.wasRunning = false; State.hasSavedState = false; return; }
+        if (dom.video.duration && !isDraggingProgress) { var progress = (dom.video.currentTime / dom.video.duration) * 100; dom.videoProgress.value = progress; dom.currentTimeDisplay.textContent = formatVideoTime(dom.video.currentTime); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; }
+        var now = Date.now(); var interval = getDetectInterval();
+        if (State.isDetecting && (now - State.lastDetectionTime >= interval)) {
+            State.lastDetectionTime = now;
+            try { var result = await detectFrame(); var boxes = result.boxes || []; var threshold = getThreshold(); var fireBoxes = boxes.filter(function(b){ return b[4] >= threshold; }); var fireCount = fireBoxes.length; State.lastDetectionResult = { boxes: boxes, fireCount: fireCount, hasResult: true, timestamp: now }; drawBoxesFromCache(boxes); State.frameCount++; dom.homeFrames.textContent = State.frameCount; dom.vidFrames.textContent = State.frameCount; dom.statFrames.textContent = State.frameCount; updateChart(fireCount); if (result.inference_time_ms) { dom.inferenceSpeed.textContent = result.inference_time_ms + 'ms'; dom.statInferenceSpeed.textContent = result.inference_time_ms + 'ms'; } if (fireCount > 0) { addAlert(fireCount, '视频', State.currentSource); dom.statusDot.className = 'dot red'; dom.statusText.textContent = '⚠️ ' + fireCount + ' 处火焰'; dom.videoStatusText.textContent = '🔥 ' + fireCount + ' 处火焰'; if (State.debugEnabled) addDebugLog('🔥 视频检测到 ' + fireCount + ' 处火焰', 'fire'); } else { dom.statusDot.className = 'dot green'; dom.statusText.textContent = '✅ 安全监控中'; dom.videoStatusText.textContent = '✅ 安全'; } var timeStr = formatTime(); var item = document.createElement('div'); item.className = 'item'; if (fireCount > 0) item.innerHTML = '<span style="color:#e11d48;">🔥 ' + fireCount + ' 处火焰</span><span class="time">' + timeStr + '</span>'; else if (boxes.length > 0) item.innerHTML = '<span style="color:#f59e0b;">⚠️ ' + boxes.length + '个目标低于阈值</span><span class="time">' + timeStr + '</span>'; else item.innerHTML = '<span style="color:#22c55e;">✅ 安全</span><span class="time">' + timeStr + '</span>'; dom.resultList.prepend(item); while (dom.resultList.children.length > MAX_RESULTS) dom.resultList.removeChild(dom.resultList.lastChild); } catch(err) { if (State.debugEnabled) addDebugLog('⚠️ 检测错误: ' + err.message, 'warn'); }
+        }
+    } else if (dom.video.readyState >= 2 && State.isPaused) {
+        var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
+        if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
+        dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+        if (State.lastDetectionResult.hasResult && State.lastDetectionResult.boxes.length > 0) drawBoxesFromCache(State.lastDetectionResult.boxes);
+        if (dom.video.duration && !isDraggingProgress) { var progress = (dom.video.currentTime / dom.video.duration) * 100; dom.videoProgress.value = progress; dom.currentTimeDisplay.textContent = formatVideoTime(dom.video.currentTime); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; }
+    }
+    var loopEnd = performance.now(); State.fpsCounter++; if (loopEnd - State.lastFrameTime >= 1000) { State.currentFPS = State.fpsCounter; dom.vidFps.textContent = State.currentFPS; State.fpsCounter = 0; State.lastFrameTime = loopEnd; }
+    State.animationId = requestAnimationFrame(videoLoop);
+}
+
+// ================================================================
+// 视频控制
+// ================================================================
+function togglePause() { if (!State.isRunning) return; State.isPaused = !State.isPaused; if (State.isPaused) { dom.video.pause(); updatePauseUI(true); if (State.isAutoSnapshot) stopAutoSnapshot(); } else { dom.video.play().catch(function(){}); updatePauseUI(false); } }
+dom.pauseVideoBtn.addEventListener('click', togglePause);
+async function startCamera() {
+    try { var s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); State.stream = s; dom.video.srcObject = s; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; await dom.video.play(); State.currentSource = '📷 摄像头'; dom.videoStatusText.textContent = '📷 摄像头'; State.isPaused = false; updatePauseUI(false); dom.progressContainer.style.display = 'none'; State.lastDetectionTime = Date.now(); State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.isLocalVideo = false; State.videoUrl = null; State.currentVideoFile = null; State.hasSavedState = false; updateDetectUI(true); addDebugLog('📷 摄像头已启动', 'info'); showToast('📷 摄像头已启动', 'success'); startLoop(); }
+    catch(err) { showToast('❌ 无法访问摄像头: ' + err.message, 'error'); alert('无法访问摄像头: ' + err.message); }
+}
+function startLocalVideo(file) {
+    if (State.videoUrl) { URL.revokeObjectURL(State.videoUrl); State.videoUrl = null; }
+    if (State.isRunning) stopAll();
+    var url = URL.createObjectURL(file); State.videoUrl = url; State.currentVideoFile = file; State.isLocalVideo = true; State.hasSavedState = false;
+    dom.video.pause(); dom.video.removeAttribute('src'); dom.video.load();
+    dom.video.src = url; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; State.currentSource = file.name; dom.videoStatusText.textContent = '🎬 ' + file.name; State.isPaused = false; updatePauseUI(false); dom.progressContainer.style.display = 'block';
+    dom.videoProgress.style.background = 'rgba(255,255,255,0.15)'; dom.videoProgress.value = 0; dom.currentTimeDisplay.textContent = '00:00'; dom.durationDisplay.textContent = '00:00';
+    State.lastDetectionTime = Date.now(); State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.wasRunning = false;
+    dom.video.onloadeddata = null; dom.video.onerror = null;
+    dom.video.onloadeddata = function() { dom.video.play().catch(function(){}); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); updatePauseUI(false); State.isRunning = true; State.lastFrameTime = performance.now(); State.fpsCounter = 0; dom.statusText.textContent = '🔄 启动中...'; dom.videoStatusText.textContent = '🔄 启动中...'; updateDetectUI(true); addDebugLog('🎬 加载本地视频: ' + file.name, 'info'); showToast('🎬 加载视频: ' + file.name, 'success'); if (State.animationId) cancelAnimationFrame(State.animationId); videoLoop(); };
+    dom.video.onerror = function(e) { addDebugLog('❌ 视频加载错误: ' + (e.target.error ? e.target.error.message : '未知错误'), 'error'); showToast('❌ 视频加载失败，请检查文件格式', 'error'); dom.statusText.textContent = '❌ 加载失败'; dom.videoStatusText.textContent = '❌ 加载失败'; };
+    if (dom.video.readyState >= 2) dom.video.onloadeddata(); else dom.video.load();
+}
+function startLoop() { if (State.isRunning) return; State.isRunning = true; State.lastFrameTime = performance.now(); State.fpsCounter = 0; dom.statusText.textContent = '🔄 启动中...'; dom.videoStatusText.textContent = '🔄 启动中...'; addDebugLog('🔄 检测循环启动', 'info'); if (State.animationId) cancelAnimationFrame(State.animationId); videoLoop(); }
+function stopAll() {
+    State.isRunning = false; if (State.animationId) { cancelAnimationFrame(State.animationId); State.animationId = null; }
+    if (State.stream) { State.stream.getTracks().forEach(function(t){ t.stop(); }); State.stream = null; }
+    dom.video.pause(); dom.video.srcObject = null; dom.video.removeAttribute('src'); dom.video.load(); dom.video.style.display = 'none'; dom.canvas.style.display = 'none';
+    State.isPaused = false; updatePauseUI(false); dom.statusText.textContent = '⏸️ 已停止'; dom.statusDot.className = 'dot off'; dom.videoStatusText.textContent = '⏸️ 已停止'; dom.vidFps.textContent = '0'; dom.progressContainer.style.display = 'none'; dom.videoProgress.value = 0; dom.currentTimeDisplay.textContent = '00:00'; dom.durationDisplay.textContent = '00:00'; dom.videoProgress.style.background = 'rgba(255,255,255,0.15)';
+    if (State.isAutoSnapshot) stopAutoSnapshot(); if (State.isModalOpen) closeModal(); if (State.isRecording) stopRecording();
+    State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.wasRunning = false; State.hasSavedState = false; State.videoUrl = null; State.isLocalVideo = false; State.currentVideoFile = null;
+    addDebugLog('⏹️ 已完全停止', 'info'); showToast('⏹️ 已完全停止', 'info');
+}
+dom.startCameraBtn.addEventListener('click', startCamera); dom.stopCameraBtn.addEventListener('click', stopAll);
+dom.toggleDetectBtn.addEventListener('click', function() { State.isDetecting = !State.isDetecting; updateDetectUI(State.isDetecting); addDebugLog('检测开关: ' + (State.isDetecting ? '开' : '关'), 'info'); showToast('检测 ' + (State.isDetecting ? '开启' : '关闭'), 'info'); });
+dom.localVideoBtn.addEventListener('click', function(){ dom.localVideoInput.click(); });
+dom.localVideoInput.addEventListener('change', function(e) {
+    if (e.target.files && e.target.files.length > 0) {
+        var file = e.target.files[0]; if (!file.type.startsWith('video/')) { showToast('⚠️ 请选择视频文件', 'warning'); this.value = ''; return; }
+        if (State.isAutoSnapshot) stopAutoSnapshot(); if (State.isRunning) stopAll();
+        setTimeout(function(){ startLocalVideo(file); }, 300);
+    } this.value = '';
+});
+
+// ================================================================
+// 自动截图
+// ================================================================
+async function captureAndSave() {
+    if (State.isSaving || !State.isRunning || State.isPaused || dom.video.readyState < 2) return;
+    State.isSaving = true;
+    try { var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480; dom.canvas.width = w; dom.canvas.height = h; dom.ctx.drawImage(dom.video, 0, 0, w, h); var result = await detectFrame(); var boxes = result.boxes || []; var fireCount = drawBoxesFromCache(boxes); var timeStr = formatTime(); dom.ctx.fillStyle = 'rgba(0,0,0,0.5)'; dom.ctx.fillRect(10, h-38, 280, 30); dom.ctx.fillStyle = '#ffffff'; dom.ctx.font = '12px Segoe UI, sans-serif'; dom.ctx.fillText('🔥 FlameDetect | ' + timeStr + ' | ' + (fireCount > 0 ? '⚠️ '+fireCount+'处火焰' : '✅ 安全'), 18, h-18); if (fireCount > 0) { var grad = dom.ctx.createLinearGradient(w-160, 12, w-20, 40); grad.addColorStop(0,'rgba(225,29,72,0.85)'); grad.addColorStop(1,'rgba(190,18,60,0.85)'); dom.ctx.fillStyle = grad; dom.ctx.shadowColor = 'rgba(225,29,72,0.3)'; dom.ctx.shadowBlur = 20; dom.ctx.beginPath(); dom.ctx.roundRect(w-160, 12, 146, 30, 8); dom.ctx.fill(); dom.ctx.shadowBlur = 0; dom.ctx.fillStyle = '#ffffff'; dom.ctx.font = 'bold 13px Segoe UI, sans-serif'; dom.ctx.fillText('🔥 火焰: ' + fireCount + ' 处', w-152, 32); addAlert(fireCount, '自动截图', State.currentSource); } var fileName = formatFileName('auto_capture'); var dataUrl = dom.canvas.toDataURL('image/jpeg', 0.92); var link = document.createElement('a'); link.href = dataUrl; link.download = fileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); dom.vidSnapshots.textContent = State.snapshotCount; dom.imgStorage.textContent = State.snapshotCount; dom.homeSnapshots.textContent = State.snapshotCount; dom.saveStatus.textContent = '📥 ' + fileName; dom.saveStatus.style.color = 'var(--text-muted)'; var resultData = { fireCount: fireCount, time: timeStr, model: result.model || '默认', boxes: boxes.filter(function(b){ return b[4] >= getThreshold(); }), totalBoxes: boxes.length, threshold: getThreshold() }; addHistoryRecord(dataUrl, resultData); }
+    catch(err) { addDebugLog('❌ 截图失败: ' + err.message, 'error'); }
+    finally { State.isSaving = false; setTimeout(function(){ if (!State.isAutoSnapshot) dom.saveStatus.textContent = ''; }, 3000); }
+}
+function startAutoSnapshot() { if (State.isAutoSnapshot) return; if (!State.isRunning) { showToast('请先开启视频', 'warning'); return; } if (State.isPaused) { showToast('视频已暂停，请先继续播放', 'warning'); return; } State.isAutoSnapshot = true; var interval = getInterval(); dom.snapshotBtn.innerHTML = '<i class="fas fa-stop"></i> 停止截图'; dom.snapshotBtn.className = 'btn btn-save active'; dom.saveStatus.textContent = '⏳ 截图间隔 ' + interval + 's'; dom.saveStatus.style.color = '#f59e0b'; addDebugLog('📸 自动截图启动，间隔 ' + interval + 's', 'success'); showToast('📸 自动截图启动，间隔 ' + interval + 's', 'success'); captureAndSave(); State.snapshotTimer = setInterval(captureAndSave, interval * 1000); }
+function stopAutoSnapshot() { State.isAutoSnapshot = false; if (State.snapshotTimer) { clearInterval(State.snapshotTimer); State.snapshotTimer = null; } dom.snapshotBtn.innerHTML = '<i class="fas fa-camera-retro"></i> 自动截图'; dom.snapshotBtn.className = 'btn btn-save'; dom.saveStatus.textContent = '⏹ 已停止 (共 ' + State.snapshotCount + ' 张)'; dom.saveStatus.style.color = 'var(--text-muted)'; addDebugLog('⏹ 自动截图停止，共 ' + State.snapshotCount + ' 张', 'info'); showToast('⏹ 自动截图停止，共 ' + State.snapshotCount + ' 张', 'info'); setTimeout(function(){ if (!State.isAutoSnapshot) dom.saveStatus.textContent = ''; }, 3000); }
+dom.snapshotBtn.addEventListener('click', function() { if (State.isAutoSnapshot) stopAutoSnapshot(); else startAutoSnapshot(); });
+
+// ================================================================
+// 录制
+// ================================================================
+dom.recordVideoBtn.addEventListener('click', async function() { if (!State.isRunning) { showToast('请先开启视频', 'warning'); return; } if (State.isRecording) stopRecording(); else await startRecording(); });
+async function startRecording() {
+    try { var canvas = dom.canvas; var stream = canvas.captureStream(30); var mimeType = 'video/webm;codecs=vp9'; if (!MediaRecorder.isTypeSupported(mimeType)) { mimeType = 'video/webm;codecs=vp8'; } if (!MediaRecorder.isTypeSupported(mimeType)) { mimeType = 'video/webm'; } var options = { mimeType: mimeType, videoBitsPerSecond: 8000000 }; State.mediaRecorder = new MediaRecorder(stream, options); State.recordedChunks = []; State.recordingStartTime = Date.now(); State.recordingSize = 0; State.mediaRecorder.ondataavailable = function(event) { if (event.data && event.data.size > 0) { State.recordedChunks.push(event.data); State.recordingSize += event.data.size; updateRecordingUI(); } }; State.mediaRecorder.onstop = async function() { if (State.recordedChunks.length === 0) { showToast('⚠️ 录制失败，未获取到数据', 'error'); resetRecordingState(); return; } var rawBlob = new Blob(State.recordedChunks, { type: 'video/webm' }); var duration = ((Date.now() - State.recordingStartTime) / 1000); downloadVideo(rawBlob, duration); resetRecordingState(); dom.recordVideoBtn.innerHTML = '<i class="fas fa-circle"></i> 录制'; dom.recordVideoBtn.className = 'btn btn-record'; dom.recordIndicator.classList.remove('active'); dom.recordingProgress.style.display = 'none'; dom.statusDot.className = 'dot green'; dom.statusText.textContent = '✅ 安全监控中'; dom.videoStatusText.textContent = '✅ 安全'; }; State.mediaRecorder.start(1000); State.isRecording = true; dom.recordVideoBtn.innerHTML = '<i class="fas fa-stop"></i> 停止'; dom.recordVideoBtn.className = 'btn btn-record active'; dom.recordIndicator.classList.add('active'); dom.recordingProgress.style.display = 'flex'; dom.statusDot.className = 'dot recording'; dom.statusText.textContent = '🔴 录制中...'; dom.videoStatusText.textContent = '🔴 录制中...'; State.recordingTimer = setInterval(updateRecordingUI, 1000); addDebugLog('🔴 开始录制', 'info'); showToast('🔴 开始录制视频...', 'info'); setTimeout(function(){ if (State.isRecording) { stopRecording(); showToast('⏹️ 录制已自动停止（10分钟限制）', 'info'); } }, 600000); }
+    catch(err) { addDebugLog('❌ 录制启动失败: ' + err.message, 'error'); showToast('❌ 录制启动失败: ' + err.message, 'error'); resetRecordingState(); }
+}
+function updateRecordingUI() { if (!State.isRecording) return; var elapsed = (Date.now() - State.recordingStartTime) / 1000; dom.recordingTime.textContent = formatDuration(elapsed); dom.recordingSize.textContent = formatFileSize(State.recordingSize); var progress = (elapsed % 60) / 60 * 100; dom.recordingBar.style.width = progress + '%'; }
+function stopRecording() { if (State.mediaRecorder && State.isRecording) { try { State.mediaRecorder.stop(); if (State.mediaRecorder.stream) State.mediaRecorder.stream.getTracks().forEach(function(track){ track.stop(); }); } catch(err) { addDebugLog('⚠️ 停止录制异常: ' + err.message, 'warn'); } if (State.recordingTimer) { clearInterval(State.recordingTimer); State.recordingTimer = null; } } }
+function downloadVideo(blob, duration) { var url = URL.createObjectURL(blob); var link = document.createElement('a'); var timestamp = formatTime().replace(/:/g, '-'); link.download = 'detection_' + timestamp + '.webm'; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); var sizeMB = (blob.size / 1024 / 1024).toFixed(2); var durationStr = duration ? ', ' + duration.toFixed(1) + 's' : ''; showToast('✅ 视频导出成功! (' + sizeMB + ' MB' + durationStr + ')', 'success'); addDebugLog('📹 视频导出成功: ' + sizeMB + ' MB' + durationStr, 'success'); setTimeout(function(){ URL.revokeObjectURL(url); }, 5000); }
+function resetRecordingState() { State.isRecording = false; State.isProcessing = false; State.recordedChunks = []; State.recordingSize = 0; if (State.recordingTimer) { clearInterval(State.recordingTimer); State.recordingTimer = null; } dom.recordingProgress.style.display = 'none'; dom.recordingBar.style.width = '0%'; dom.recordingTime.textContent = '00:00'; dom.recordingSize.textContent = '0 KB'; }
+
+// ================================================================
+// 视频进度条
+// ================================================================
+dom.videoProgress.addEventListener('mousedown', function(){ isDraggingProgress = true; });
+dom.videoProgress.addEventListener('touchstart', function(){ isDraggingProgress = true; });
+dom.videoProgress.addEventListener('input', function() { if (dom.video.duration) { var time = (this.value / 100) * dom.video.duration; dom.currentTimeDisplay.textContent = formatVideoTime(time); } });
+dom.videoProgress.addEventListener('change', function() { if (dom.video.duration) { var time = (this.value / 100) * dom.video.duration; dom.video.currentTime = time; isDraggingProgress = false; var progress = this.value; dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; } });
+dom.videoProgress.addEventListener('touchend', function() { if (dom.video.duration) { var time = (this.value / 100) * dom.video.duration; dom.video.currentTime = time; isDraggingProgress = false; var progress = this.value; dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; } });
+document.addEventListener('mouseup', function(){ isDraggingProgress = false; });
+dom.playPauseBtn.addEventListener('click', function() { if (!State.isRunning) { showToast('请先加载视频或打开摄像头', 'warning'); return; } if (dom.video.paused) { dom.video.play().catch(function(){}); updatePauseUI(false); if (State.isAutoSnapshot) { stopAutoSnapshot(); setTimeout(startAutoSnapshot, 100); } } else { dom.video.pause(); updatePauseUI(true); if (State.isAutoSnapshot) stopAutoSnapshot(); } });
+dom.video.addEventListener('loadedmetadata', function() { dom.progressContainer.style.display = 'block'; dom.durationDisplay.textContent = formatVideoTime(this.duration); });
+dom.video.addEventListener('timeupdate', function() { if (!isDraggingProgress) { if (this.duration) { var progress = (this.currentTime / this.duration) * 100; dom.videoProgress.value = progress; dom.currentTimeDisplay.textContent = formatVideoTime(this.currentTime); dom.durationDisplay.textContent = formatVideoTime(this.duration); dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; } } });
+dom.video.addEventListener('pause', function() { if (!State.isRestoring) updatePauseUI(true); });
+dom.video.addEventListener('play', function() { if (!State.isRestoring) updatePauseUI(false); });
+
+// ================================================================
+// 全屏
+// ================================================================
+function toggleFullscreen() { var wrapper = dom.videoWrapper; if (!document.fullscreenElement) { if (wrapper.requestFullscreen) wrapper.requestFullscreen(); else if (wrapper.webkitRequestFullscreen) wrapper.webkitRequestFullscreen(); else if (wrapper.msRequestFullscreen) wrapper.msRequestFullscreen(); wrapper.classList.add('fullscreen'); } else { if (document.exitFullscreen) document.exitFullscreen(); else if (document.webkitExitFullscreen) document.webkitExitFullscreen(); else if (document.msExitFullscreen) document.msExitFullscreen(); wrapper.classList.remove('fullscreen'); } }
+dom.fullscreenBtn.addEventListener('click', toggleFullscreen);
+document.addEventListener('fullscreenchange', function() { if (!document.fullscreenElement) dom.videoWrapper.classList.remove('fullscreen'); });
+
+// ================================================================
+// 设置同步
+// ================================================================
+dom.settingsThreshold.addEventListener('input', function() { dom.settingsThresholdVal.textContent = parseFloat(this.value).toFixed(2); dom.confThreshold.value = this.value; dom.thresholdVal.textContent = parseFloat(this.value).toFixed(2); });
+dom.settingsDetectInterval.addEventListener('input', function() { var val = parseInt(this.value); dom.settingsIntervalVal.textContent = val + 'ms'; dom.detectInterval.value = val; dom.intervalVal.textContent = val + 'ms'; State.detectionInterval = val; });
+dom.settingsIntervalInput.addEventListener('change', function() { dom.intervalInput.value = this.value; if (State.isAutoSnapshot) { stopAutoSnapshot(); setTimeout(startAutoSnapshot, 100); } });
+dom.confThreshold.addEventListener('input', function() { dom.thresholdVal.textContent = parseFloat(this.value).toFixed(2); dom.settingsThreshold.value = this.value; dom.settingsThresholdVal.textContent = parseFloat(this.value).toFixed(2); });
+dom.detectInterval.addEventListener('input', function() { var val = parseInt(this.value); dom.intervalVal.textContent = val + 'ms'; dom.settingsDetectInterval.value = val; dom.settingsIntervalVal.textContent = val + 'ms'; State.detectionInterval = val; });
+dom.intervalInput.addEventListener('change', function() { dom.settingsIntervalInput.value = this.value; if (State.isAutoSnapshot) { stopAutoSnapshot(); setTimeout(startAutoSnapshot, 100); } });
+
+// ================================================================
+// 统计页面
+// ================================================================
+function updateStatsPage() { dom.statTotalAlerts.textContent = State.alertCount; dom.statTodayAlerts.textContent = State.todayAlerts; dom.statImages.textContent = State.imageCount; dom.statFrames.textContent = State.frameCount; dom.statTotalDetections.textContent = State.totalDetections; }
+function updateSettingsPage() { dom.settingsHistoryCount.textContent = HistoryState.records.length; }
+function updateVideoStats() { dom.vidAlerts.textContent = State.alertCount; dom.vidFrames.textContent = State.frameCount; dom.vidFps.textContent = State.currentFPS || 0; dom.vidSnapshots.textContent = State.snapshotCount; }
+
+// ================================================================
+// 快捷键
+// ================================================================
+document.addEventListener('keydown', function(e) {
+    if (e.code === 'Escape' && State.isModalOpen) { closeModal(); e.preventDefault(); return; }
+    if (e.target.tagName === 'INPUT') return;
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); showToast('🔍 搜索功能: 输入功能名称快速跳转', 'info'); return; }
+    if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); navigateTo('settingsPage'); return; }
+    switch(e.code) {
+        case 'Space': if (State.isRunning) { e.preventDefault(); togglePause(); } break;
+        case 'KeyD': if (State.isRunning) { e.preventDefault(); dom.toggleDetectBtn.click(); } break;
+        case 'KeyS': if (e.ctrlKey || e.metaKey) { e.preventDefault(); dom.snapshotBtn.click(); } break;
+        case 'KeyR': if (e.ctrlKey || e.metaKey) { e.preventDefault(); dom.recordVideoBtn.click(); } break;
+        case 'KeyL': if (e.ctrlKey || e.metaKey) { e.preventDefault(); dom.debugToggleBtn.click(); } break;
+        case 'KeyF': if (State.isRunning) { e.preventDefault(); toggleFullscreen(); } break;
+        case 'ArrowLeft': if (State.isRunning && dom.video.duration) { e.preventDefault(); dom.video.currentTime = Math.max(0, dom.video.currentTime - 5); } break;
+        case 'ArrowRight': if (State.isRunning && dom.video.duration) { e.preventDefault(); dom.video.currentTime = Math.min(dom.video.duration, dom.video.currentTime + 5); } break;
+        case 'Digit1': navigateTo('homePage'); break;
+        case 'Digit2': navigateTo('imagePage'); break;
+        case 'Digit3': navigateTo('videoPage'); break;
+        case 'Digit4': navigateTo('statsPage'); break;
+        case 'Digit5': navigateTo('settingsPage'); break;
+    }
+});
+
+// ================================================================
+// Electron 集成
+// ================================================================
+if (isElectron && window.electronAPI) {
+    window.electronAPI.onBackendReady(function() { console.log('✅ 后端已就绪'); State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线'; showToast('✅ 后端服务已就绪', 'success'); setTimeout(function(){ fetchModelList(); refreshModelInfo(); }, 500); });
+    window.electronAPI.onBackendLog(function(data) { console.log('[Backend]', data); if (State.debugEnabled) addDebugLog('[后端] ' + data, 'info'); });
+    window.electronAPI.onBackendError(function(error) { console.error('[Backend Error]', error); dom.backendStatusText.textContent = '❌ 错误'; dom.backendStatusText.style.color = '#ef4444'; showToast('后端错误: ' + error, 'error'); });
+    window.electronAPI.onBackendExited(function(code) { console.log('🔚 后端退出，退出码: ' + code); State.isBackendReady = false; dom.backendStatusText.textContent = '❌ 已退出 (' + code + ')'; dom.backendStatusText.style.color = '#ef4444'; dom.sidebarStatusDot.className = 'dot offline'; dom.sidebarStatusText.textContent = '离线'; if (code !== 0) showToast('⚠️ 后端异常退出，退出码: ' + code, 'error'); });
+    window.electronAPI.onRestartBackend(function() { showToast('🔄 正在重启后端服务...', 'info'); dom.backendStatusText.textContent = '🔄 重启中...'; dom.backendStatusText.style.color = '#f59e0b'; setTimeout(function(){ checkServer(); }, 3000); });
+    dom.restartBackendBtn.addEventListener('click', async function() { try { await window.electronAPI.restartBackend(); showToast('🔄 正在重启后端...', 'info'); } catch(err) { showToast('❌ 重启失败: ' + err.message, 'error'); } });
+    window.electronAPI.getBackendStatus().then(function(status) { if (status.ready) { State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; } });
+}
+
+// ================================================================
+// 初始化
+// ================================================================
+async function init() {
+    addDebugLog('🚀 系统初始化中...', 'info');
+    await fetchModelList();
+    await refreshModelInfo();
+    updateModelStatusIndicator();
+    if (dom.modelSelect.value === '' && State.availableModels.length > 0) { dom.modelSelect.value = 'default'; updateModelStatusIndicator(); }
+    dom.topModelName.textContent = dom.modelSelect.value === 'default' ? '默认' : (dom.modelSelect.value || '未选择');
+    dom.sidebarModel.textContent = dom.modelSelect.value === 'default' ? '默认' : (dom.modelSelect.value || '未选择');
+    dom.statModelName.textContent = dom.modelSelect.value === 'default' ? '默认模型' : (dom.modelSelect.value || '未选择');
+    dom.settingsModelName.textContent = dom.modelSelect.value === 'default' ? '默认模型' : (dom.modelSelect.value || '未选择');
+    dom.settingsHistoryCount.textContent = HistoryState.records.length;
+    updateDetectUI(true);
+    addDebugLog('✅ 系统初始化完成', 'success');
+    console.log('🔥 YOLOv8 火焰检测 · 完整版');
+    console.log('📌 5个功能页面: 首页 | 图片检测 | 视频监控 | 数据统计 | 系统设置');
+    console.log('📹 检测间隔: 10ms-500ms (步长10ms)');
+    console.log('⌨️  快捷键: 1-5 切换页面 | Space暂停 | Ctrl+R录制 | F全屏');
+    console.log('🔄 切换页面后自动暂停视频并关闭检测');
+    if (isElectron) console.log('⚡ 运行在 Electron 环境中');
+}
+init();
+
+window.addEventListener('unhandledrejection', function(event) { addDebugLog('⚠️ 未处理的Promise错误: ' + event.reason, 'error'); console.error('Unhandled Rejection:', event.reason); });
+window.addEventListener('error', function(event) { addDebugLog('⚠️ 全局错误: ' + event.message, 'error'); console.error('Global Error:', event); });
+if (!CanvasRenderingContext2D.prototype.roundRect) { CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) { if (r > w/2) r = w/2; if (r > h/2) r = h/2; this.moveTo(x+r, y); this.arcTo(x+w, y, x+w, y+h, r); this.arcTo(x+w, y+h, x, y+h, r); this.arcTo(x, y+h, x, y, r); this.arcTo(x, y, x+w, y, r); return this; }; }
+</script>
+</body>
+</html>

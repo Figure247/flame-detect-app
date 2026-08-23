@@ -1,0 +1,61 @@
+[2026-08-20 12:21:03] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 12:21:03] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 12:21:05] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 12:21:05] [INFO] ⏱️ 加载耗时: 2.18s
+[2026-08-20 12:21:05] [INFO] 💻 设备: cuda
+[2026-08-20 12:22:42] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 12:22:44] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 12:22:45] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 12:22:45] [INFO] ⏱️ 加载耗时: 0.28s
+[2026-08-20 12:22:45] [INFO] 💻 设备: cuda
+[2026-08-20 17:59:28] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 17:59:28] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 17:59:32] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 17:59:32] [INFO] ⏱️ 加载耗时: 4.01s
+[2026-08-20 17:59:32] [INFO] 💻 设备: cuda
+[2026-08-20 17:59:38] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 18:04:36] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 18:04:36] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 18:04:36] [INFO] ⏱️ 加载耗时: 0.34s
+[2026-08-20 18:04:36] [INFO] 💻 设备: cuda
+[2026-08-20 18:04:40] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 18:04:41] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 18:04:41] [INFO] ⏱️ 加载耗时: 0.25s
+[2026-08-20 18:04:41] [INFO] 💻 设备: cuda
+[2026-08-20 18:04:44] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 18:04:45] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 18:04:45] [INFO] ⏱️ 加载耗时: 0.24s
+[2026-08-20 18:04:45] [INFO] 💻 设备: cuda
+[2026-08-20 18:15:53] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 18:17:17] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:06:43] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:06:43] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 19:06:46] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 19:06:46] [INFO] ⏱️ 加载耗时: 3.26s
+[2026-08-20 19:06:46] [INFO] 💻 设备: cuda
+[2026-08-20 19:07:53] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:08:16] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:10:37] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:48:39] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:48:39] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 19:48:42] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 19:48:42] [INFO] ⏱️ 加载耗时: 2.91s
+[2026-08-20 19:48:42] [INFO] 💻 设备: cuda
+[2026-08-20 19:48:49] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:50:56] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 19:50:56] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 19:50:59] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 19:50:59] [INFO] ⏱️ 加载耗时: 2.99s
+[2026-08-20 19:50:59] [INFO] 💻 设备: cuda
+[2026-08-20 19:51:04] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 22:20:19] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 22:20:19] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 22:20:22] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 22:20:22] [INFO] ⏱️ 加载耗时: 3.28s
+[2026-08-20 22:20:22] [INFO] 💻 设备: cuda
+[2026-08-20 22:20:31] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 22:20:52] [INFO] 📋 找到 1 个模型: ['best.pt']
+[2026-08-20 22:21:05] [INFO] 🔄 正在加载模型: C:\Users\hemen\Desktop\训练结果9\fire_detect_finetune\weights\best.pt
+[2026-08-20 22:21:05] [SUCCESS] ✅ 模型加载成功: best.pt
+[2026-08-20 22:21:05] [INFO] ⏱️ 加载耗时: 0.31s
+[2026-08-20 22:21:05] [INFO] 💻 设备: cuda
