@@ -7,6 +7,14 @@ const path = require('path');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const os = require('os');
+const ffmpegPath = require('ffmpeg-static');
+
+function getFfmpegPath() {
+    if (!ffmpegPath) return null;
+    const unpackedPath = ffmpegPath.replace(`${path.sep}app.asar${path.sep}`, `${path.sep}app.asar.unpacked${path.sep}`);
+    if (app.isPackaged && fs.existsSync(unpackedPath)) return unpackedPath;
+    return ffmpegPath;
+}
 
 // ================================================================
 // 硬件加速配置
@@ -30,6 +38,7 @@ let backendProcess = null;
 let backendPort = 8000;
 let isBackendReady = false;
 let backendStartAttempts = 0;
+let isQuitting = false;
 const MAX_BACKEND_RETRIES = 3;
 
 // ================================================================
@@ -322,7 +331,7 @@ function startBackend() {
         }
 
         // 自动重启
-        if (code !== 0 && code !== null && backendStartAttempts < MAX_BACKEND_RETRIES) {
+        if (!isQuitting && code !== 0 && code !== null && backendStartAttempts < MAX_BACKEND_RETRIES) {
             backendStartAttempts++;
             console.log(`🔄 后端异常退出，${backendStartAttempts}/${MAX_BACKEND_RETRIES} 次重试...`);
             setTimeout(startBackend, 3000);
@@ -678,6 +687,35 @@ ipcMain.handle('get-data-path', () => {
     return dataDir;
 });
 
+ipcMain.handle('convert-video', async (event, videoData) => {
+    const converterPath = getFfmpegPath();
+    if (!converterPath || !videoData) throw new Error('FFmpeg 或视频数据不可用');
+
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flamedetect-video-'));
+    const inputPath = path.join(tempDir, 'input.webm');
+    const outputPath = path.join(tempDir, 'output.mp4');
+    try {
+        fs.writeFileSync(inputPath, Buffer.from(videoData));
+        await new Promise((resolve, reject) => {
+            const converter = spawn(converterPath, [
+                '-y', '-i', inputPath,
+                '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '23',
+                '-pix_fmt', 'yuv420p', '-movflags', '+faststart', outputPath,
+            ], { windowsHide: true });
+            let errorOutput = '';
+            converter.stderr.on('data', data => { errorOutput += data.toString(); });
+            converter.on('error', reject);
+            converter.on('close', code => {
+                if (code === 0 && fs.existsSync(outputPath)) resolve();
+                else reject(new Error(errorOutput.trim() || `FFmpeg 退出码: ${code}`));
+            });
+        });
+        return fs.readFileSync(outputPath);
+    } finally {
+        fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+});
+
 // ================================================================
 // 应用生命周期
 // ================================================================
@@ -705,6 +743,7 @@ app.on('activate', () => {
 });
 
 app.on('before-quit', () => {
+    isQuitting = true;
     stopBackend();
 });
 
