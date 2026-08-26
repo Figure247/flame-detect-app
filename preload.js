@@ -21,6 +21,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDirectory: (dir) => ipcRenderer.invoke('open-directory', dir),
     getAppPath: () => ipcRenderer.invoke('get-app-path'),
     getDataPath: () => ipcRenderer.invoke('get-data-path'),
+    convertVideo: (videoData) => ipcRenderer.invoke('convert-video', videoData),
+    onBackendReady: (callback) => {
+        return ipcRenderer.on('backend-ready', (event, ...args) => callback(...args));
+    },
+    onBackendLog: (callback) => {
+        return ipcRenderer.on('backend-log', (event, ...args) => callback(...args));
+    },
+    onBackendExited: (callback) => {
+        return ipcRenderer.on('backend-exited', (event, ...args) => callback(...args));
+    },
+    onBackendError: (callback) => {
+        return ipcRenderer.on('backend-error', (event, ...args) => callback(...args));
+    },
+    onRestartBackend: (callback) => {
+        return ipcRenderer.on('restart-backend', (event, ...args) => callback(...args));
+    },
 
     // ===== 事件监听（带清理功能） =====
     on: (channel, callback) => {

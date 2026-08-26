@@ -5,13 +5,14 @@ echo   🔥 FlameDetect Pro 正在启动...
 echo ========================================
 echo.
 
-cd /d "C:\Users\hemen\Desktop\flame-detect-app"
+cd /d "%~dp0"
 
 :: 设置 Node.js 路径（使用 PyCharm 自带的）
-set PATH=C:\Users\hemen\AppData\Roaming\JetBrains\PyCharm2026.1\node\versions\24.19.0;%PATH%
+where node >nul 2>nul
+if errorlevel 1 if exist "C:\Users\hemen\AppData\Roaming\JetBrains\PyCharm2026.1\node\versions\24.19.0" set PATH=C:\Users\hemen\AppData\Roaming\JetBrains\PyCharm2026.1\node\versions\24.19.0;%PATH%
 
 :: 激活 Python 虚拟环境
-call venv\Scripts\activate.bat
+if exist "%~dp0venv\Scripts\activate.bat" call "%~dp0venv\Scripts\activate.bat"
 
 :: 启动应用
 npm start

@@ -9,6 +9,7 @@ from fastapi import FastAPI, File, UploadFile, HTTPException, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.concurrency import run_in_threadpool
 import numpy as np
 import cv2
 from ultralytics import YOLO
@@ -32,6 +33,7 @@ import re
 import logging
 import sys
 import atexit
+from threading import RLock
 
 # ================================================================
 # 日志配置
@@ -99,6 +101,29 @@ MAX_IMAGE_SIZE = 4096
 MAX_HISTORY_SIZE = 100
 SUPPORTED_EXTENSIONS = {'.pt', '.onnx', '.pth', '.weights'}
 SUPPORTED_IMAGE_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff'}
+BACKEND_PORT = int(os.environ.get('FLAME_DETECT_PORT', '8000'))
+MAX_IMAGE_UPLOAD_SIZE = 50 * 1024 * 1024
+MAX_MODEL_UPLOAD_SIZE = 500 * 1024 * 1024
+
+
+def safe_model_filename(filename: Optional[str]) -> str:
+    """Return a model filename that cannot escape the models directory."""
+    safe_name = Path(filename or '').name
+    if not safe_name or safe_name != filename or Path(safe_name).suffix.lower() not in SUPPORTED_EXTENSIONS:
+        raise ValueError('模型文件名无效或格式不受支持')
+    return safe_name
+
+
+async def read_upload_with_limit(file: UploadFile, max_size: int) -> bytes:
+    """Read an upload in bounded chunks to avoid unbounded memory use."""
+    chunks = []
+    total_size = 0
+    while chunk := await file.read(1024 * 1024):
+        total_size += len(chunk)
+        if total_size > max_size:
+            raise HTTPException(status_code=413, detail=f"文件过大，请上传小于{max_size // (1024 * 1024)}MB的文件")
+        chunks.append(chunk)
+    return b''.join(chunks)
 
 # ================================================================
 # 缓存管理器 (LRU)
@@ -153,6 +178,7 @@ class ModelManager:
         if hasattr(self, '_initialized'):
             return
         self._initialized = True
+        self._model_lock = RLock()
 
         self.current_model = None
         self.current_model_path = None
@@ -227,16 +253,17 @@ class ModelManager:
 
     def load_model(self, model_path: str) -> tuple:
         """加载指定模型"""
-        if self.is_loading:
-            return False, "模型正在加载中，请稍后..."
+        with self._model_lock:
+            if self.is_loading:
+                return False, "模型正在加载中，请稍后..."
 
-        if not os.path.exists(model_path):
-            return False, f"模型文件不存在: {model_path}"
+            if not os.path.exists(model_path):
+                return False, f"模型文件不存在: {model_path}"
 
-        if os.path.getsize(model_path) < 1024 * 1024:
-            return False, f"模型文件太小 (可能损坏): {os.path.getsize(model_path)} bytes"
+            if os.path.getsize(model_path) < 1024 * 1024:
+                return False, f"模型文件太小 (可能损坏): {os.path.getsize(model_path)} bytes"
 
-        self.is_loading = True
+            self.is_loading = True
         try:
             start_time = time.time()
             logger.info(f"🔄 正在加载模型: {model_path}")
@@ -254,14 +281,13 @@ class ModelManager:
             _ = model(test_img, verbose=False)
 
             # 更新状态
-            self.current_model = model
-            self.current_model_path = model_path
-            self.current_model_name = os.path.basename(model_path)
-            self.model_classes = model.names
-            self.load_time = time.time() - start_time
-
-            # 清空缓存
-            self.cache.clear()
+            with self._model_lock:
+                self.current_model = model
+                self.current_model_path = model_path
+                self.current_model_name = os.path.basename(model_path)
+                self.model_classes = model.names
+                self.load_time = time.time() - start_time
+                self.cache.clear()
 
             logger.info(f"✅ 模型加载成功: {self.current_model_name} ({self.load_time:.2f}s)")
             logger.info(f"💻 设备: {self.device}")
@@ -272,10 +298,16 @@ class ModelManager:
             logger.error(f"❌ 模型加载失败: {e}")
             return False, f"模型加载失败: {str(e)}"
         finally:
-            self.is_loading = False
+            with self._model_lock:
+                self.is_loading = False
 
     def load_model_by_name(self, model_name: str) -> tuple:
         """通过模型名称加载"""
+        try:
+            model_name = safe_model_filename(model_name)
+        except ValueError as e:
+            return False, str(e)
+
         model_path = MODELS_DIR / model_name
         if model_path.exists():
             return self.load_model(str(model_path))
@@ -298,13 +330,16 @@ class ModelManager:
 
     def predict(self, image_path: str, conf_threshold: float = 0.25) -> Dict[str, Any]:
         """执行检测"""
-        if self.current_model is None:
-            raise ValueError("模型未加载")
-
         start_time = time.time()
 
         # 执行推理
-        results = self.current_model(image_path, conf=conf_threshold, verbose=False)[0]
+        with self._model_lock:
+            model = self.current_model
+            model_name = self.current_model_name
+            model_names = model.names if model else {}
+            if model is None:
+                raise ValueError("模型未加载")
+            results = model(image_path, conf=conf_threshold, verbose=False)[0]
 
         inference_time = (time.time() - start_time) * 1000
 
@@ -327,9 +362,9 @@ class ModelManager:
 
         return {
             "boxes": boxes,
-            "names": self.current_model.names,
+            "names": model_names,
             "total": len(boxes),
-            "model_name": self.current_model_name,
+            "model_name": model_name,
             "inference_time_ms": round(inference_time, 2),
             "conf_threshold": conf_threshold
         }
@@ -437,8 +472,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=["http://localhost:8000", "http://127.0.0.1:8000", "null"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -481,11 +516,7 @@ async def predict(
         raise HTTPException(status_code=503, detail="模型未加载，请先上传模型")
 
     try:
-        contents = await file.read()
-
-        # 检查文件大小
-        if len(contents) > 50 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="文件过大，请上传小于50MB的图片")
+        contents = await read_upload_with_limit(file, MAX_IMAGE_UPLOAD_SIZE)
 
         # 处理图片
         img = process_image(contents)
@@ -497,7 +528,7 @@ async def predict(
 
         try:
             # 推理
-            result = model_manager.predict(tmp_path, conf_threshold)
+            result = await run_in_threadpool(model_manager.predict, tmp_path, conf_threshold)
         finally:
             # 清理临时文件
             try:
@@ -551,19 +582,19 @@ async def list_models():
 @app.post("/upload_model")
 async def upload_model(file: UploadFile = File(...)):
     """上传并加载模型"""
-    if not any(file.filename.endswith(ext) for ext in SUPPORTED_EXTENSIONS):
+    try:
+        model_filename = safe_model_filename(file.filename)
+    except ValueError as e:
         raise HTTPException(
             status_code=400,
-            detail=f"只支持 {', '.join(SUPPORTED_EXTENSIONS)} 格式"
+            detail=str(e)
         )
 
     try:
-        content = await file.read()
-        if len(content) > 500 * 1024 * 1024:
-            raise HTTPException(status_code=413, detail="模型文件过大，请上传小于500MB的文件")
+        content = await read_upload_with_limit(file, MAX_MODEL_UPLOAD_SIZE)
 
         # 保存
-        file_path = MODELS_DIR / file.filename
+        file_path = MODELS_DIR / model_filename
         with open(file_path, "wb") as f:
             f.write(content)
 
@@ -573,7 +604,7 @@ async def upload_model(file: UploadFile = File(...)):
         model_manager.scan_models()
 
         # 尝试加载
-        success, message = model_manager.load_model(str(file_path))
+        success, message = await run_in_threadpool(model_manager.load_model, str(file_path))
 
         if success:
             return {
@@ -605,7 +636,7 @@ async def load_model_api(model_name: str = Body(..., embed=True)):
     if model_manager.is_loading:
         raise HTTPException(status_code=409, detail="模型正在加载中，请稍后...")
 
-    success, message = model_manager.load_model_by_name(model_name)
+    success, message = await run_in_threadpool(model_manager.load_model_by_name, model_name)
 
     if not success:
         raise HTTPException(status_code=400, detail=message)
@@ -625,7 +656,7 @@ async def load_default_model():
     if not DEFAULT_MODEL_PATH or not os.path.exists(DEFAULT_MODEL_PATH):
         raise HTTPException(status_code=404, detail="默认模型不存在")
 
-    success, message = model_manager.load_model(DEFAULT_MODEL_PATH)
+    success, message = await run_in_threadpool(model_manager.load_model, DEFAULT_MODEL_PATH)
 
     if success:
         return {
@@ -749,8 +780,8 @@ if __name__ == "__main__":
 
     uvicorn.run(
         app,
-        host="0.0.0.0",
-        port=8000,
+        host="127.0.0.1",
+        port=BACKEND_PORT,
         log_level="info",
         workers=1,
         access_log=False
