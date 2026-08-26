@@ -1,0 +1,17 @@
+.git
+.github
+.idea
+node_modules
+venv
+venv_backup
+__pycache__
+build
+dist
+data
+logs
+models
+reports
+uploads
+*.exe
+*.blockmap
+*.pyc

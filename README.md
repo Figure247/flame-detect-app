@@ -128,6 +128,22 @@ npm run build:linux
 
 构建产物输出到 `dist/`。Windows 安装包使用 NSIS，应用名称为 **FlameDetect Pro**。
 
+## 发布后端容器包
+
+仓库提供 GitHub Actions 工作流，可将 FastAPI/YOLO 后端构建并发布到 GitHub Container Registry（GHCR）：
+
+```text
+ghcr.io/figure247/flame-detect-app:v2.0.0
+```
+
+推送 `v*` 格式的 Git 标签，或在 GitHub Actions 页面手动运行 `Publish backend container`，即可触发构建。运行容器时可挂载数据目录并映射端口：
+
+```bash
+docker run --rm -p 8000:8000 -v flame-detect-data:/app/data ghcr.io/figure247/flame-detect-app:v2.0.0
+```
+
+模型文件请放入挂载数据卷的 `models/` 目录，后端启动后可通过 `http://localhost:8000/docs` 查看 API 文档。首次发布后，若希望其他用户无需登录即可拉取镜像，需要在 GitHub Packages 页面将该容器包设置为 Public。
+
 ## 项目结构
 
 ```text
