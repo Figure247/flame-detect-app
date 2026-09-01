@@ -36,10 +36,6 @@
     ],
     "extraResources": [
       {
-        "from": "backend.exe",
-        "to": "backend.exe"
-      },
-      {
         "from": "main.py",
         "to": "main.py"
       },

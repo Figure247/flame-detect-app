@@ -17,42 +17,65 @@
     <style>
         /* ===== CSS 变量 ===== */
         :root {
-            --bg-body: #f0f2f5;
+            --bg-body: #f3f5f9;
             --bg-sidebar: #ffffff;
-            --bg-content: #f0f2f5;
+            --bg-content: #f3f5f9;
             --bg-card: #ffffff;
-            --bg-card-hover: #f8f9fa;
-            --bg-input: #f1f3f5;
-            --bg-overlay: rgba(0, 0, 0, 0.5);
-            --text-primary: #1a1a2e;
-            --text-secondary: #4a4a6a;
-            --text-muted: #8a8aa8;
+            --bg-card-hover: #f7f9fc;
+            --bg-input: #f2f4f8;
+            --bg-overlay: rgba(15, 23, 42, 0.55);
+            --text-primary: #111827;
+            --text-secondary: #475569;
+            --text-muted: #7b8798;
             --text-white: #ffffff;
-            --border-color: #e8e8f0;
-            --border-light: rgba(0, 0, 0, 0.06);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.12);
+            --border-color: #e7ebf2;
+            --border-light: rgba(15, 23, 42, 0.06);
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+            --shadow-md: 0 10px 22px rgba(15, 23, 42, 0.08);
+            --shadow-lg: 0 18px 38px rgba(15, 23, 42, 0.12);
+            --shadow-soft: 0 10px 24px rgba(15, 23, 42, 0.06);
+            --shadow-card: 0 10px 24px rgba(15, 23, 42, 0.06);
+            --shadow-card-hover: 0 16px 30px rgba(15, 23, 42, 0.1);
             --brand-red: #e11d48;
             --brand-red-light: #f43f5e;
-            --brand-blue: #3b82f6;
-            --brand-purple: #8b5cf6;
-            --brand-green: #22c55e;
-            --brand-cyan: #06b6d4;
+            --brand-blue: #2563eb;
+            --brand-purple: #7c3aed;
+            --brand-green: #16a34a;
+            --brand-cyan: #0ea5e9;
             --brand-gold: #f59e0b;
             --brand-orange: #f97316;
-            --gradient-fire: linear-gradient(135deg, #f43f5e, #e11d48);
-            --gradient-cyan: linear-gradient(135deg, #06b6d4, #3b82f6);
-            --gradient-purple: linear-gradient(135deg, #8b5cf6, #d946ef);
-            --gradient-green: linear-gradient(135deg, #22c55e, #10b981);
-            --gradient-gold: linear-gradient(135deg, #f59e0b, #fbbf24);
-            --gradient-orange: linear-gradient(135deg, #f97316, #fb923c);
-            --radius-lg: 20px;
-            --radius-md: 14px;
+            --gradient-fire: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+            --gradient-cyan: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%);
+            --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            --gradient-green: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+            --gradient-gold: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            --gradient-orange: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+            --radius-2xl: 22px;
+            --radius-xl: 18px;
+            --radius-lg: 16px;
+            --radius-md: 12px;
             --radius-sm: 10px;
-            --radius-xs: 6px;
-            --transition-smooth: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-            --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            --radius-xs: 8px;
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-5: 20px;
+            --space-6: 24px;
+            --transition-smooth: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+            --transition-spring: all 0.48s cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-card: cubic-bezier(0.22, 1, 0.36, 1);
+            --ease-pop: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        :root {
+            --manage-surface: #ffffff;
+            --manage-surface-alt: #f8fafc;
+            --manage-card: #ffffff;
+            --manage-text: #0f172a;
+            --manage-muted: #475569;
+            --manage-border: rgba(148, 163, 184, 0.22);
+            --manage-soft: rgba(15, 23, 42, 0.04);
         }
 
         [data-theme="dark"] {
@@ -71,6 +94,16 @@
             --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
             --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
             --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+            --shadow-soft: 0 12px 24px rgba(2, 6, 23, 0.22);
+            --shadow-card: 0 12px 24px rgba(2, 6, 23, 0.22);
+            --shadow-card-hover: 0 18px 32px rgba(2, 6, 23, 0.26);
+            --manage-surface: #0f172a;
+            --manage-surface-alt: #111827;
+            --manage-card: #111827;
+            --manage-text: #f8fafc;
+            --manage-muted: #cbd5e1;
+            --manage-border: rgba(148, 163, 184, 0.18);
+            --manage-soft: rgba(148, 163, 184, 0.05);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -250,7 +283,7 @@
         .main {
             margin-left: 220px;
             flex: 1;
-            padding: 20px 28px 28px;
+            padding: 18px 24px 28px;
             min-height: 100vh;
             background: var(--bg-content);
             transition: var(--transition-smooth);
@@ -260,64 +293,137 @@
             display: flex; justify-content: space-between;
             align-items: center; flex-wrap: wrap;
             gap: 12px;
-            margin-bottom: 20px;
-            padding-bottom: 14px;
-            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 18px;
+            padding: 14px 18px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,252,0.8));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7), 0 10px 24px rgba(15, 23, 42, 0.05);
+            backdrop-filter: blur(10px);
+            position: sticky; top: 10px; z-index: 30;
+        }
+        [data-theme="dark"] .topbar {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9));
+            border-color: rgba(148, 163, 184, 0.18);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 10px 24px rgba(2, 6, 23, 0.28);
         }
         .topbar-left { display: flex; align-items: center; gap: 12px; }
-        .topbar-left h1 { font-size: 1.3rem; font-weight: 700; }
-        .topbar-left h1 span { color: var(--text-muted); font-weight: 400; }
+        .topbar-left h1 {
+            font-size: 1.26rem; font-weight: 700;
+            letter-spacing: -0.02em;
+            margin: 0;
+        }
+        .topbar-left h1 span { color: var(--text-muted); font-weight: 500; }
         .topbar-left .page-indicator {
-            font-size: 0.65rem; color: var(--text-muted);
-            background: var(--bg-card);
-            padding: 3px 12px; border-radius: 16px;
+            font-size: 0.62rem; color: var(--text-muted);
+            background: rgba(148,163,184,0.07);
+            padding: 5px 10px; border-radius: 999px;
             border: 1px solid var(--border-color);
+            letter-spacing: 0.08em; text-transform: uppercase;
+            font-weight: 700;
         }
         .topbar-right {
-            display: flex; align-items: center; gap: 12px;
-            font-size: 0.75rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 10px;
+            font-size: 0.72rem; color: var(--text-muted);
+            flex-wrap: wrap;
         }
         .topbar-right .model-badge {
-            padding: 3px 12px; border-radius: 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            font-size: 0.65rem; color: var(--text-secondary);
+            padding: 5px 12px; border-radius: 999px;
+            background: rgba(34,197,94,0.08);
+            border: 1px solid rgba(34,197,94,0.18);
+            font-size: 0.62rem; color: var(--text-secondary);
+            font-weight: 700;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
         }
         .topbar-right .model-badge i { color: var(--brand-green); }
         .topbar-right .clock {
-            font-family: monospace; font-size: 0.8rem;
+            font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.8rem;
             color: var(--text-secondary);
+            padding: 5px 10px; border-radius: 999px;
+            background: rgba(15,23,42,0.03); border: 1px solid var(--border-color);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
         }
         .topbar-right .app-badge {
-            font-size: 0.55rem; padding: 2px 10px;
-            border-radius: 12px;
+            font-size: 0.56rem; padding: 5px 10px;
+            border-radius: 999px;
             background: var(--gradient-fire);
-            color: #fff; font-weight: 600;
-            letter-spacing: 0.5px;
+            color: #fff; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            box-shadow: 0 10px 18px rgba(225,29,72,0.15);
         }
 
         /* ===== 页面 ===== */
-        .page { display: none; animation: fadeInUp 0.5s cubic-bezier(0.23,1,0.32,1); }
+        .page { display: none; animation: fadeInUp 0.68s cubic-bezier(0.16, 1, 0.3, 1); }
         .page.active { display: block; }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(24px) scale(0.98); }
+            from { opacity: 0; transform: translateY(18px) scale(0.986); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
+        @keyframes panelFloatIn {
+            0% { opacity: 0; transform: translateY(18px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes softPulse {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
         /* ===== 面板 ===== */
         .panel {
             background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            padding: 18px 22px 22px;
+            border-radius: var(--radius-xl);
+            padding: 18px 18px 20px;
             border: 1px solid var(--border-color);
             transition: var(--transition-smooth);
             margin-bottom: 18px;
             position: relative; overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* ===== 全局统一卡片规范 ===== */
+        .panel,
+        .management-card,
+        .operations-panel,
+        .quick-card,
+        .batch-summary-card,
+        .batch-preview-item,
+        .recent-report-item {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            background: var(--bg-card);
+            box-shadow: var(--shadow-soft);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
+        }
+        .panel:hover,
+        .management-card:hover,
+        .operations-panel:hover,
+        .quick-card:hover,
+        .batch-summary-card:hover,
+        .batch-preview-item:hover,
+        .recent-report-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(96, 165, 250, 0.4);
+            box-shadow: var(--shadow-card-hover);
+        }
+        [data-theme="dark"] .panel,
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .settings-bar,
+        [data-theme="dark"] .upload-zone,
+        [data-theme="dark"] .model-selector,
+        [data-theme="dark"] .quick-card,
+        [data-theme="dark"] .history-item {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.88));
+            border-color: rgba(148, 163, 184, 0.18);
+            box-shadow: 0 12px 24px rgba(2, 6, 23, 0.22);
         }
         .panel::before {
             content: ''; position: absolute; top: 0; left: 0;
-            width: 100%; height: 3px;
-            background: var(--gradient-fire);
+            width: 100%; height: 2px;
+            background: linear-gradient(90deg, rgba(225,29,72,0.92), rgba(59,130,246,0.78));
             transform: scaleX(0);
             transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
             transform-origin: left;
@@ -325,22 +431,25 @@
         .panel:hover::before { transform: scaleX(1); }
         .panel:last-child { margin-bottom: 0; }
         .panel:hover {
-            border-color: var(--border-light);
-            box-shadow: var(--shadow-md);
+            border-color: rgba(148,163,184,0.22);
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
             transform: translateY(-2px);
         }
         .panel-header {
             display: flex; justify-content: space-between;
             align-items: center; flex-wrap: wrap;
             gap: 8px; margin-bottom: 14px;
+            padding-bottom: 10px; border-bottom: 1px solid rgba(148,163,184,0.12);
         }
         .panel-header .title {
-            font-size: 0.9rem; font-weight: 600;
+            font-size: 0.88rem; font-weight: 700;
             display: flex; align-items: center; gap: 10px;
+            letter-spacing: 0.01em;
+            color: var(--text-primary);
         }
         .panel-header .title i { color: var(--brand-red-light); transition: var(--transition-smooth); }
-        .panel:hover .panel-header .title i { transform: rotate(-6deg) scale(1.05); }
-        .panel-header .sub { font-size: 0.65rem; color: var(--text-muted); }
+        .panel:hover .panel-header .title i { transform: rotate(-6deg) scale(1.04); }
+        .panel-header .sub { font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
 
         /* ===== 统计卡片 ===== */
         .stats-grid {
@@ -349,18 +458,19 @@
             gap: 12px; margin-bottom: 18px;
         }
         .stat-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-md);
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.74));
+            border-radius: 16px;
             padding: 14px 18px;
             border: 1px solid var(--border-color);
             display: flex; align-items: center; gap: 14px;
             transition: var(--transition-spring);
             cursor: default;
+            min-height: 90px;
         }
         .stat-card:hover {
             transform: translateY(-4px) scale(1.02);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--brand-red-light);
+            box-shadow: 0 18px 28px rgba(15, 23, 42, 0.12);
+            border-color: rgba(225,29,72,0.24);
         }
         .stat-card .icon {
             width: 38px; height: 38px;
@@ -370,7 +480,7 @@
             flex-shrink: 0;
             transition: var(--transition-smooth);
         }
-        .stat-card:hover .icon { transform: rotate(6deg) scale(1.08); }
+        .stat-card:hover .icon { transform: rotate(10deg) scale(1.12); }
         .stat-card .icon.red { background: var(--gradient-fire); }
         .stat-card .icon.blue { background: var(--gradient-cyan); }
         .stat-card .icon.purple { background: var(--gradient-purple); }
@@ -385,50 +495,63 @@
 
         /* ===== 按钮 ===== */
         .btn {
-            padding: 6px 16px;
-            border-radius: 30px;
-            border: none;
-            font-weight: 600; font-size: 0.7rem;
+            padding: 7px 14px;
+            border-radius: 12px;
+            border: 1px solid transparent;
+            font-weight: 700; font-size: 0.7rem;
             cursor: pointer;
-            transition: var(--transition-spring);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s ease, filter 0.32s ease;
             display: inline-flex; align-items: center; gap: 6px;
             font-family: inherit;
             position: relative; overflow: hidden;
+            letter-spacing: 0.01em;
+            box-shadow: 0 4px 12px rgba(15,23,42,0.06);
+            will-change: transform, box-shadow, opacity;
         }
         .btn::after {
             content: ''; position: absolute; inset: 0;
-            background: rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.12);
             transform: scaleX(0); transform-origin: right;
-            transition: transform 0.4s ease;
+            transition: transform 0.35s ease;
         }
         .btn:hover::after { transform: scaleX(1); transform-origin: left; }
         .btn:hover:not(:disabled) {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 14px 22px rgba(15,23,42,0.1);
         }
-        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
 
         .btn-primary { background: var(--gradient-fire); color: #fff; }
-        .btn-primary:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(225,29,72,0.35); }
+        .btn-primary:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(225,29,72,0.18); }
         .btn-success { background: var(--gradient-green); color: #fff; }
-        .btn-success:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(34,197,94,0.3); }
+        .btn-success:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(34,197,94,0.18); }
         .btn-purple { background: var(--gradient-purple); color: #fff; }
-        .btn-purple:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(139,92,246,0.3); }
+        .btn-purple:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(124,58,237,0.18); }
         .btn-cyan { background: var(--gradient-cyan); color: #fff; }
-        .btn-cyan:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(6,182,212,0.3); }
+        .btn-cyan:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(14,165,233,0.18); }
         .btn-gold { background: var(--gradient-gold); color: #fff; }
-        .btn-gold:hover:not(:disabled) { box-shadow: 0 4px 20px rgba(245,158,11,0.3); }
+        .btn-gold:hover:not(:disabled) { box-shadow: 0 10px 20px rgba(245,158,11,0.18); }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: #fff;
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+        .btn-danger:hover:not(:disabled) {
+            box-shadow: 0 10px 20px rgba(239,68,68,0.2);
+        }
         .btn-ghost {
             background: var(--bg-input);
             color: var(--text-secondary);
-            border: 1px solid var(--border-color);
+            border-color: var(--border-color);
+            box-shadow: none;
         }
         .btn-ghost:hover:not(:disabled) {
             background: var(--bg-card-hover);
-            border-color: var(--text-muted);
+            border-color: rgba(148,163,184,0.35);
+            box-shadow: 0 8px 16px rgba(15,23,42,0.04);
         }
-        .btn-sm { padding: 3px 12px; font-size: 0.6rem; }
-        .btn-xs { padding: 2px 10px; font-size: 0.55rem; }
+        .btn-sm { padding: 5px 12px; font-size: 0.6rem; }
+        .btn-xs { padding: 3px 10px; font-size: 0.55rem; }
         .btn-record { background: #dc2626; color: #fff; }
         .btn-record.active { background: var(--brand-green); }
         .btn-save { background: var(--brand-cyan); color: #fff; }
@@ -441,8 +564,9 @@
         .btn-debug.active { background: var(--brand-purple); color: #fff; border-color: var(--brand-purple); }
 
         .control-bar {
-            display: flex; flex-wrap: wrap; gap: 6px;
+            display: flex; flex-wrap: wrap; gap: 8px;
             margin-top: 10px; align-items: center;
+            padding-top: 6px;
         }
 
         /* ===== 上传区域 ===== */
@@ -539,7 +663,7 @@
             animation: zoomIn 0.3s ease;
         }
         @keyframes zoomIn {
-            from { transform: scale(0.96); opacity: 0.8; }
+            from { transform: scale(0.985); opacity: 0.82; }
             to { transform: scale(1); opacity: 1; }
         }
         .video-wrapper.fullscreen .fullscreen-btn .fa-expand { display: none; }
@@ -620,8 +744,8 @@
             display: flex; align-items: center; justify-content: space-between;
             padding: 6px 0;
             border-bottom: 1px solid var(--border-light);
-            animation: slideIn 0.4s cubic-bezier(0.23,1,0.32,1);
-            transition: var(--transition-smooth);
+            animation: slideIn 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: transform 0.28s var(--ease-card), background 0.32s ease, padding 0.28s ease;
         }
         .alert-item:hover {
             background: var(--bg-card-hover);
@@ -630,7 +754,7 @@
         }
         .alert-item:last-child { border-bottom: none; }
         @keyframes slideIn {
-            from { opacity: 0; transform: translateX(-16px) scale(0.98); }
+            from { opacity: 0; transform: translateX(-10px) scale(0.995); }
             to { opacity: 1; transform: translateX(0) scale(1); }
         }
         .alert-left { display: flex; align-items: center; gap: 10px; }
@@ -704,8 +828,8 @@
             position: relative;
         }
         .history-item:hover {
-            transform: translateY(-4px) scale(1.03);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-3px) scale(1.015);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
             border-color: var(--brand-red-light);
         }
         .history-item img {
@@ -824,10 +948,10 @@
             box-shadow: var(--shadow-lg);
             border: 1px solid var(--border-color);
             overflow: hidden;
-            animation: scaleIn 0.4s cubic-bezier(0.175,0.885,0.32,1.275);
+            animation: scaleIn 0.42s cubic-bezier(0.16, 1, 0.3, 1);
         }
         @keyframes scaleIn {
-            from { transform: scale(0.9) translateY(20px); opacity: 0; }
+            from { transform: scale(0.96) translateY(8px); opacity: 0; }
             to { transform: scale(1) translateY(0); opacity: 1; }
         }
         .modal-content img {
@@ -909,7 +1033,7 @@
             color: #fff;
             font-size: 0.8rem; font-weight: 600;
             z-index: 3000;
-            animation: slideUp 0.5s cubic-bezier(0.175,0.885,0.32,1.275);
+            animation: slideUp 0.46s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: var(--shadow-lg);
             max-width: 380px;
             pointer-events: none;
@@ -919,7 +1043,7 @@
         .toast-warning { background: var(--brand-gold); }
         .toast-info { background: var(--brand-blue); }
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(40px) scale(0.9); }
+            from { opacity: 0; transform: translateY(18px) scale(0.985); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
@@ -955,8 +1079,9 @@
             border: 1px solid var(--border-color);
             text-align: center;
             cursor: pointer;
-            transition: var(--transition-spring);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
             position: relative; overflow: hidden;
+            animation: panelFloatIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .quick-card::before {
             content: ''; position: absolute; top: 0; left: 0;
@@ -979,6 +1104,355 @@
         .quick-card:hover .icon-wrap { transform: scale(1.1) rotate(-3deg); }
         .quick-card .title { font-weight: 600; font-size: 0.85rem; }
         .quick-card .desc { font-size: 0.65rem; color: var(--text-muted); }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px;
+            border-radius: 999px; border: 1px solid rgba(34,197,94,0.35);
+            background: rgba(34,197,94,0.08); color: #86efac; font-size: 0.58rem;
+            font-weight: 700; letter-spacing: 0.04em; white-space: nowrap;
+        }
+        .status-badge.warning { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); color: #fbbf24; }
+        .status-badge.danger { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); color: #fca5a5; }
+        .status-badge.offline { border-color: rgba(148,163,184,0.35); background: rgba(148,163,184,0.08); color: #cbd5e1; }
+
+        .management-toolbar {
+            display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:14px; padding:10px 12px;
+            border:1px solid rgba(148,163,184,0.18); border-radius:14px; background: rgba(148,163,184,0.05);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+        }
+        [data-theme="dark"] .management-toolbar {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.9));
+            border-color: rgba(148,163,184,0.18);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+        }
+        .management-toolbar .filter-pill {
+            border:1px solid rgba(148, 163, 184, 0.18); background: rgba(15, 23, 42, 0.88); color: #e2e8f0;
+            border-radius:999px; padding:6px 12px; font-size:0.62rem; cursor:pointer; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease, color 0.3s ease;
+            font-weight:700; letter-spacing:0.04em;
+            will-change: transform, box-shadow;
+        }
+        .management-toolbar .filter-pill:hover { border-color: rgba(96, 165, 250, 0.5); color: #ffffff; transform: translateY(-2px) scale(1.01); box-shadow: 0 8px 18px rgba(59,130,246,0.14); }
+        .management-toolbar .filter-pill.active { animation: softPulse 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .management-toolbar .filter-pill.active {
+            background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(30,41,59,0.9));
+            border-color: rgba(96,165,250,0.6); color: #ffffff; box-shadow: inset 0 0 0 1px rgba(96,165,250,0.1);
+        }
+        .management-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+        .management-card {
+            position: relative;
+            overflow: hidden;
+            border:1px solid rgba(148,163,184,0.18); border-radius:16px; background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.88));
+            padding: 14px; display:flex; flex-direction:column; gap:10px; box-shadow: var(--shadow-card); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
+            min-height: 150px;
+            will-change: transform, box-shadow;
+            animation: panelFloatIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .management-card::before {
+            content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, rgba(239,68,68,0.9), rgba(59,130,246,0.85), rgba(16,185,129,0.8));
+            transform: scaleX(0);
+            transform-origin: left center;
+            opacity: 0;
+            transition: transform 0.52s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 18px rgba(59,130,246,0.18);
+        }
+        .management-card:hover::before {
+            transform: scaleX(1);
+            opacity: 1;
+            box-shadow: 0 0 22px rgba(59,130,246,0.22);
+        }
+        .management-card.empty-state-card,
+        .management-card.empty-state-card:hover,
+        .management-card.empty-state-card::before {
+            box-shadow: none;
+            transform: none;
+            border-color: var(--border-color);
+        }
+        .management-card.empty-state-card::before {
+            display: none;
+            content: none;
+        }
+        [data-theme="dark"] .management-card {
+            background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.9));
+            border-color: rgba(148,163,184,0.18);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 12px 22px rgba(2,6,23,0.18);
+        }
+        .management-card:hover { transform: translateY(-3px) scale(1.01); border-color: rgba(96,165,250,0.45); box-shadow: var(--shadow-card-hover); }
+        .management-card:active { transform: translateY(-1px) scale(0.995); }
+        .management-card-header { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+        .management-card-title { font-size:0.8rem; font-weight:700; color:#0f172a; word-break:break-word; }
+        .management-card-status { font-size:0.58rem; padding:4px 8px; border-radius:999px; font-weight:700; }
+
+        .management-card-status.fire { background: rgba(239,68,68,0.12); color:#ef4444; }
+        .management-card-status.safe { background: rgba(34,197,94,0.12); color:#22c55e; }
+        .management-card-status.empty { background: rgba(245,158,11,0.12); color:#f59e0b; }
+        .management-metrics { display:grid; grid-template-columns: repeat(3, minmax(70px, 1fr)); gap:8px; }
+        .operations-hero { display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; margin-bottom:16px; }
+        .operations-panel {
+            position: relative;
+            overflow: hidden;
+            border:1px solid rgba(148,163,184,0.18); border-radius:20px; background: linear-gradient(180deg, rgba(15,23,42,0.92), rgba(15,23,42,0.74));
+            padding: 16px; box-shadow: var(--shadow-card); min-height: 230px;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+            will-change: transform, box-shadow;
+            animation: panelFloatIn 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .operations-panel::before {
+            content: ''; position: absolute; left: 0; top: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, rgba(59,130,246,0.9), rgba(16,185,129,0.8), rgba(245,158,11,0.8));
+            transform: scaleX(0);
+            transform-origin: left center;
+            opacity: 0;
+            transition: transform 0.52s cubic-bezier(0.23,1,0.32,1), opacity 0.25s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 18px rgba(59,130,246,0.12);
+        }
+        .operations-panel:hover::before {
+            transform: scaleX(1);
+            opacity: 1;
+            box-shadow: 0 0 20px rgba(96,165,250,0.2);
+        }
+        .operations-panel:hover {
+            transform: translateY(-2px) scale(1.005);
+            box-shadow: var(--shadow-card-hover);
+        }
+        [data-theme="dark"] .operations-panel {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(17, 24, 39, 0.84));
+            border-color: rgba(148,163,184,0.2);
+            box-shadow: 0 12px 24px rgba(2, 6, 23, 0.24);
+        }
+        .operations-panel h3 { margin:0 0 10px; font-size:0.68rem; color:#94a3b8; letter-spacing:0.14em; text-transform:uppercase; font-weight:700; }
+        .operations-panel .headline { font-size:1.32rem; font-weight:800; margin:0; color:#f8fafc; }
+        .operations-panel .subline { margin-top:6px; color:#cbd5e1; font-size:0.62rem; }
+        .operations-grid { display:grid; grid-template-columns: repeat(3, minmax(100px, 1fr)); gap:10px; }
+        .operation-stat {
+            position: relative;
+            background: rgba(15, 23, 42, 0.72); border:1px solid rgba(148,163,184,0.16); border-radius:12px; padding:10px; min-height: 76px;
+            display:flex; flex-direction:column; justify-content:center;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform, box-shadow;
+            animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .operation-stat:hover {
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 10px 18px rgba(59,130,246,0.08);
+            border-color: rgba(96, 165, 250, 0.34);
+        }
+        [data-theme="dark"] .operation-stat {
+            background: rgba(15, 23, 42, 0.88);
+            border-color: rgba(148,163,184,0.18);
+        }
+        .operation-stat .label { display:block; font-size:0.52rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.06em; }
+        .operation-stat .value { display:block; margin-top:5px; font-size:1.05rem; font-weight:800; color:#f8fafc; }
+        .operations-toolbar { display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 12px; }
+        .operations-toolbar .btn { min-width: 112px; }
+        .timeline { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:10px; }
+        .timeline li {
+            display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid rgba(148,163,184,0.16); border-radius:10px;
+            background: rgba(15,23,42,0.42); min-height: 54px;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, background 0.3s ease;
+            animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .timeline li:hover {
+            transform: translateX(4px);
+            border-color: rgba(96,165,250,0.4);
+        }
+        [data-theme="dark"] .timeline li {
+            background: rgba(17, 24, 39, 0.9);
+            border-color: rgba(148,163,184,0.18);
+        }
+        .timeline .dot { width:8px; height:8px; border-radius:50%; background:linear-gradient(180deg, #60a5fa, #3b82f6); margin-top:6px; box-shadow: 0 0 0 3px rgba(59,130,246,0.14); }
+        .timeline .text { font-size:0.64rem; color:#e2e8f0; }
+        .timeline .time { font-size:0.54rem; color:#94a3b8; margin-top:2px; }
+
+        [data-theme="dark"] .management-toolbar,
+        [data-theme="dark"] .management-card,
+        [data-theme="dark"] .management-card-header,
+        [data-theme="dark"] .management-card-title,
+        [data-theme="dark"] .management-card-meta,
+        [data-theme="dark"] .mini-btn,
+        [data-theme="dark"] .recent-report-item,
+        [data-theme="dark"] .recent-report-item .report-name,
+        [data-theme="dark"] .recent-report-item .report-meta,
+        [data-theme="dark"] .recent-report-item .export-mini,
+        [data-theme="dark"] .batch-summary-card,
+        [data-theme="dark"] .batch-summary-card .label,
+        [data-theme="dark"] .batch-summary-card .value,
+        [data-theme="dark"] .filter-pill,
+        [data-theme="dark"] .operation-stat,
+        [data-theme="dark"] .timeline li {
+            color: #f8fafc !important;
+            background: rgba(17, 24, 39, 0.96) !important;
+            border-color: rgba(148, 163, 184, 0.2) !important;
+        }
+
+        [data-theme="dark"] .management-toolbar,
+        [data-theme="dark"] .management-card,
+        [data-theme="dark"] .recent-report-item,
+        [data-theme="dark"] .batch-summary-card,
+        [data-theme="dark"] .operations-panel,
+        [data-theme="dark"] .operation-stat,
+        [data-theme="dark"] .timeline li {
+            border-color: rgba(148, 163, 184, 0.22) !important;
+        }
+
+        [data-theme="dark"] .filter-pill,
+        [data-theme="dark"] .mini-btn,
+        [data-theme="dark"] .recent-report-item .export-mini {
+            background: rgba(15, 23, 42, 0.9) !important;
+            color: #f8fafc !important;
+        }
+
+        [data-theme="dark"] .operations-panel {
+            background: linear-gradient(180deg, rgba(15,23,42,0.96), rgba(15,23,42,0.8));
+            border-color: rgba(148, 163, 184, 0.22);
+            box-shadow: 0 8px 18px rgba(2, 6, 23, 0.2);
+        }
+
+        [data-theme="dark"] .operations-panel h3,
+        [data-theme="dark"] .operations-panel .subline,
+        [data-theme="dark"] .operation-stat .label,
+        [data-theme="dark"] .timeline .time,
+        [data-theme="dark"] .timeline .text,
+        [data-theme="dark"] .operations-panel .headline,
+        [data-theme="dark"] .management-card-title,
+        [data-theme="dark"] .management-card-meta {
+            color: #f8fafc;
+        }
+
+        [data-theme="dark"] .operation-stat,
+        [data-theme="dark"] .timeline li {
+            background: rgba(15, 23, 42, 0.88);
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+        .management-metric { background: rgba(15,23,42,0.62); border:1px solid rgba(148,163,184,0.18); border-radius:10px; padding:8px 6px; text-align:center; }
+        .management-metric .label { display:block; font-size:0.52rem; color:#94a3b8; }
+        .management-metric .value { display:block; font-size:0.9rem; font-weight:700; margin-top:4px; color:#f8fafc; }
+        .management-card-footer { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+        .management-card-meta { font-size:0.58rem; color:#0f172a; }
+        .management-card-actions { display:flex; gap:6px; flex-wrap:wrap; }
+        .mini-btn { border:1px solid rgba(148,163,184,0.2); background: rgba(59,130,246,0.08); color:#0f172a; border-radius:8px; padding:5px 8px; font-size:0.56rem; cursor:pointer; }
+        .mini-btn.success { background: rgba(34,197,94,0.08); border-color: rgba(34,197,94,0.25); }
+        .mini-btn.warning { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); }
+        .mini-btn.danger { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #b91c1c; }
+
+        #managePage {
+            --page-surface: var(--manage-surface);
+            --page-surface-alt: var(--manage-surface-alt);
+            --page-card: var(--manage-card);
+            --page-text: var(--manage-text);
+            --page-muted: var(--manage-muted);
+            --page-border: var(--manage-border);
+            --page-soft: var(--manage-soft);
+        }
+
+        #managePage .panel,
+        #managePage .operations-panel,
+        #managePage .management-toolbar,
+        #managePage .management-card,
+        #managePage .operation-stat,
+        #managePage .timeline li,
+        #managePage .batch-summary-panel,
+        #managePage .recent-reports-panel,
+        #managePage .mini-btn,
+        #managePage .filter-pill {
+            color: var(--page-text) !important;
+        }
+
+        #managePage .panel,
+        #managePage .operations-panel,
+        #managePage .management-toolbar,
+        #managePage .management-card,
+        #managePage .operation-stat,
+        #managePage .timeline li,
+        #managePage .batch-summary-panel,
+        #managePage .recent-reports-panel,
+        #managePage .mini-btn {
+            background: var(--page-card) !important;
+            border-color: var(--page-border) !important;
+        }
+
+        #managePage .operations-panel {
+            background: linear-gradient(180deg, var(--page-card), var(--page-surface-alt)) !important;
+        }
+
+        #managePage .management-toolbar {
+            background: var(--page-surface-alt) !important;
+        }
+
+        #managePage .filter-pill {
+            background: var(--page-surface-alt) !important;
+            border-color: var(--page-border) !important;
+            color: var(--page-text) !important;
+        }
+
+        #managePage .filter-pill.active {
+            background: linear-gradient(135deg, rgba(59,130,246,0.18), var(--page-surface-alt)) !important;
+            color: var(--page-text) !important;
+            border-color: rgba(96,165,250,0.5) !important;
+        }
+
+        #managePage .operations-panel h3,
+        #managePage .operations-panel .headline,
+        #managePage .operations-panel .subline,
+        #managePage .operation-stat .label,
+        #managePage .operation-stat .value,
+        #managePage .timeline .text,
+        #managePage .timeline .time,
+        #managePage .management-card-title,
+        #managePage .management-card-meta,
+        #managePage .management-card-status,
+        #managePage .batch-summary-card .label,
+        #managePage .batch-summary-card .value {
+            color: var(--page-text) !important;
+        }
+
+        #managePage .batch-summary-card {
+            background: var(--page-surface-alt) !important;
+            border-color: var(--page-border) !important;
+        }
+
+        #managePage .management-card {
+            background: linear-gradient(180deg, var(--page-card), var(--page-surface-alt)) !important;
+        }
+
+        .batch-summary-panel, .recent-reports-panel { margin-top: 12px; padding: 12px; border: 1px solid var(--border-color); border-radius: 16px; background: rgba(15, 23, 42, 0.02); }
+        .batch-summary-grid { display:grid; grid-template-columns: repeat(4, minmax(90px, 1fr)); gap: 10px; margin-top: 10px; }
+        .batch-summary-card { background: rgba(59,130,246,0.04); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 10px; text-align: center; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease; }
+        .batch-summary-card:hover { transform: translateY(-2px); border-color: rgba(96,165,250,0.35); box-shadow: 0 8px 16px rgba(15,23,42,0.05); }
+        .batch-summary-card .label { display:block; font-size:0.6rem; color:#0f172a; letter-spacing:0.04em; text-transform:uppercase; }
+        .batch-summary-card .value { display:block; margin-top:6px; font-size:1.15rem; font-weight:700; color:#0f172a; }
+        .batch-summary-card.fire { background: rgba(239,68,68,0.05); }
+        .batch-summary-card.safe { background: rgba(34,197,94,0.05); }
+        .batch-preview-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 12px; }
+        .batch-preview-item { position:relative; border:1px solid var(--border-color); background: rgba(15,23,42,0.02); border-radius: 12px; padding: 10px; min-height: 110px; display:flex; flex-direction:column; justify-content:space-between; transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease; }
+        .batch-preview-item:hover { transform: translateY(-2px); border-color: rgba(96,165,250,0.35); box-shadow: 0 8px 16px rgba(15,23,42,0.04); }
+        .batch-preview-item .status { display:inline-flex; align-items:center; justify-content:center; align-self:flex-start; padding:4px 8px; border-radius: 999px; font-size:0.58rem; font-weight:700; }
+        .batch-preview-item .status.safe { background: rgba(34,197,94,0.12); color: #22c55e; }
+        .batch-preview-item .status.fire { background: rgba(239,68,68,0.12); color: #ef4444; }
+        .batch-preview-item .status.error { background: rgba(245,158,11,0.12); color: #f59e0b; }
+        .batch-preview-item .name { font-size:0.68rem; color:var(--text-primary); line-height:1.5; margin-top:8px; word-break:break-word; }
+        .batch-preview-item .meta { font-size:0.6rem; color:var(--text-muted); display:flex; justify-content:space-between; gap:8px; }
+        .batch-detail-panel { margin-top: 12px; border: 1px solid var(--border-color); border-radius: 16px; background: rgba(15, 23, 42, 0.02); padding: 12px; display:none; }
+        .batch-detail-table { width:100%; border-collapse: collapse; margin-top: 10px; font-size:0.68rem; }
+        .batch-detail-table th, .batch-detail-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); text-align:left; }
+        .batch-detail-table th { color:var(--text-muted); font-weight:600; }
+        .batch-detail-table td.status-cell { font-weight:700; }
+        .batch-detail-table td.status-cell.safe { color:#22c55e; }
+        .batch-detail-table td.status-cell.fire { color:#ef4444; }
+        .batch-detail-table td.status-cell.error { color:#f59e0b; }
+        .recent-report-list { display:grid; gap: 8px; margin-top: 10px; }
+        .recent-report-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 10px; border:1px solid var(--border-color); border-radius: 10px; background: rgba(15,23,42,0.02); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease, box-shadow 0.3s ease; }
+        .recent-report-item:hover { transform: translateY(-2px); border-color: rgba(96,165,250,0.35); box-shadow: 0 8px 16px rgba(15,23,42,0.04); }
+        .recent-report-item .left { display:flex; flex-direction:column; gap:3px; }
+        .recent-report-item .report-name { font-size:0.7rem; color:#0f172a; font-weight:600; }
+        .recent-report-item .report-meta { font-size:0.58rem; color:#0f172a; }
+        .report-inline-actions { display:flex; align-items:center; gap:6px; }
+        .recent-report-item .export-mini,
+        .recent-report-item .delete-mini { border:none; border-radius: 8px; padding: 5px 8px; font-size: 0.58rem; cursor: pointer; transition: transform 0.25s ease, background 0.25s ease, opacity 0.25s ease; }
+        .recent-report-item .export-mini { background: rgba(59,130,246,0.08); color: #0f172a; }
+        .recent-report-item .delete-mini { background: rgba(239,68,68,0.08); color: #b91c1c; }
+        .recent-report-item .export-mini:hover { transform: translateY(-1px); background: rgba(59,130,246,0.12); }
+        .recent-report-item .delete-mini:hover { transform: translateY(-1px); background: rgba(239,68,68,0.12); }
 
         /* ===== 响应式 ===== */
         @media (max-width: 1024px) {
@@ -1034,6 +1508,7 @@
             <button class="nav-item" data-page="imagePage" onclick="navigateTo('imagePage')"><i class="fas fa-image"></i><span>图片检测</span><span class="badge-nav" id="imageBadge">0</span></button>
             <button class="nav-item" data-page="videoPage" onclick="navigateTo('videoPage')"><i class="fas fa-video"></i><span>视频监控</span><span class="badge-nav" id="videoBadge">0</span></button>
             <button class="nav-item" data-page="statsPage" onclick="navigateTo('statsPage')"><i class="fas fa-chart-pie"></i><span>数据统计</span></button>
+            <button class="nav-item" data-page="managePage" onclick="navigateTo('managePage')"><i class="fas fa-clipboard-list"></i><span>管理页</span></button>
             <button class="nav-item" data-page="settingsPage" onclick="navigateTo('settingsPage')"><i class="fas fa-cog"></i><span>系统设置</span></button>
         </nav>
         <div class="sidebar-footer">
@@ -1047,6 +1522,9 @@
         <div class="topbar">
             <div class="topbar-left"><h1 id="pageTitle">首页 <span>Dashboard</span></h1><span class="page-indicator" id="pageIndicator">概览</span></div>
             <div class="topbar-right"><span class="app-badge" id="appModeBadge">⚡ 桌面版</span><span class="model-badge"><i class="fas fa-cube"></i> <span id="topModelName">默认</span></span><span class="clock" id="topClock">--:--:--</span></div>
+        </div>
+
+        <div id="backendOfflineBanner" style="display:none; margin:0 0 14px; padding:10px 14px; border-radius:12px; border:1px solid rgba(245,158,11,0.4); background:rgba(245,158,11,0.12); color:#fbbf24; font-size:0.75rem; font-weight:700; letter-spacing:0.02em;">
         </div>
 
         <!-- ===== 首页 ===== -->
@@ -1083,10 +1561,55 @@
                 </div>
                 <div class="control-bar">
                     <button class="btn btn-primary" id="detectImageBtn" disabled><i class="fas fa-search"></i> 检测</button>
+                    <button class="btn btn-ghost" id="batchSelectBtn"><i class="fas fa-images"></i> 批量选择</button>
+                    <button class="btn btn-gold" id="exportReportBtn" disabled><i class="fas fa-file-export"></i> 导出报告</button>
                     <button class="btn btn-ghost" id="clearImageBtn"><i class="fas fa-undo"></i> 清空</button>
                     <button class="btn btn-debug" id="debugToggleBtn"><i class="fas fa-bug"></i> 调试</button>
                     <span id="imageResult" style="font-size:0.7rem;color:var(--text-muted);margin-left:auto;">等待检测</span>
                 </div>
+                <div id="batchMeta" style="margin-top:10px;padding:8px 12px;border:1px solid var(--border-color);background:rgba(59,130,246,0.05);border-radius:12px;font-size:0.72rem;color:var(--text-secondary);">已选择图片后，点击检测即可开始处理。</div>
+                <div class="batch-summary-panel" id="batchSummaryPanel" style="display:none;">
+                    <div class="panel-header" style="padding:0 0 8px 0; margin:0; border:none;">
+                        <div class="title"><i class="fas fa-chart-pie"></i> 批量检测摘要</div>
+                        <span class="sub" id="batchSummaryStatus">待检测</span>
+                    </div>
+                    <div class="batch-summary-grid">
+                        <div class="batch-summary-card"><span class="label">总数</span><span class="value" id="batchSummaryTotal">0</span></div>
+                        <div class="batch-summary-card fire"><span class="label">火情</span><span class="value" id="batchSummaryFire">0</span></div>
+                        <div class="batch-summary-card safe"><span class="label">安全</span><span class="value" id="batchSummarySafe">0</span></div>
+                        <div class="batch-summary-card"><span class="label">异常</span><span class="value" id="batchSummaryError">0</span></div>
+                    </div>
+                    <div class="batch-preview-grid" id="batchPreviewGrid"></div>
+                    <div class="batch-detail-panel" id="batchDetailPanel">
+                        <div class="panel-header" style="padding:0 0 8px 0; margin:0; border:none;">
+                            <div class="title"><i class="fas fa-table-list"></i> 详细结果</div>
+                            <span class="sub" id="batchDetailCount">0 项</span>
+                        </div>
+                        <table class="batch-detail-table" id="batchDetailTable">
+                            <thead>
+                                <tr>
+                                    <th>文件名</th>
+                                    <th>状态</th>
+                                    <th>火情数</th>
+                                    <th>总框数</th>
+                                    <th>耗时</th>
+                                </tr>
+                            </thead>
+                            <tbody id="batchDetailBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="recent-reports-panel">
+                    <div class="panel-header" style="padding:0 0 8px 0; margin:0; border:none;">
+                        <div class="title"><i class="fas fa-file-alt"></i> 最近报告</div>
+                        <span class="sub" id="recentReportsCount">0 条</span>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+                        <button class="btn btn-danger btn-xs" id="deleteAllRecentReportsBtn" disabled><i class="fas fa-trash"></i> 全部删除</button>
+                    </div>
+                    <div class="recent-report-list" id="recentReportsList"></div>
+                </div>
+                <input type="file" id="imageBatchFileInput" accept="image/*" multiple style="display:none;" />
                 <div class="debug-panel" id="debugPanel"><div style="font-weight:bold;color:var(--text-muted);margin-bottom:3px;font-size:0.65rem;">📊 检测日志</div><div id="debugLog"></div></div>
             </div>
             <div class="panel">
@@ -1211,6 +1734,55 @@
             </div>
         </div>
 
+        <!-- ===== 管理页 ===== -->
+        <div class="page" id="managePage">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="icon red"><i class="fas fa-file-alt"></i></div><div class="info"><h4 id="manageTotalReports">0</h4><p>总报告</p></div></div>
+                <div class="stat-card"><div class="icon blue"><i class="fas fa-exclamation-triangle"></i></div><div class="info"><h4 id="manageFireReports">0</h4><p>火情报告</p></div></div>
+                <div class="stat-card"><div class="icon green"><i class="fas fa-shield-alt"></i></div><div class="info"><h4 id="manageSafeReports">0</h4><p>安全报告</p></div></div>
+                <div class="stat-card"><div class="icon gold"><i class="fas fa-clock"></i></div><div class="info"><h4 id="manageLatestReport">--</h4><p>最新记录</p></div></div>
+            </div>
+            <div class="operations-hero">
+                <div class="operations-panel">
+                    <h3>运营中心</h3>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <p class="headline" id="operationsHeadline">系统运行正常</p>
+                        <span class="status-badge" id="operationsStatusBadge">● 正常</span>
+                    </div>
+                    <div class="subline" id="operationsSubline">等待最新报告更新</div>
+                    <div class="operations-grid" style="margin-top:14px;">
+                        <div class="operation-stat"><span class="label">服务状态</span><span class="value" id="opHealthStatus">在线</span></div>
+                        <div class="operation-stat"><span class="label">上次检测</span><span class="value" id="opLatestTime">--</span></div>
+                        <div class="operation-stat"><span class="label">告警率</span><span class="value" id="opAlertRate">0%</span></div>
+                    </div>
+                </div>
+                <div class="operations-panel">
+                    <h3>操作动作</h3>
+                    <div class="operations-toolbar">
+                        <button class="btn btn-primary btn-sm" id="exportLatestReportBtn"><i class="fas fa-file-export"></i> 导出最新</button>
+                        <button class="btn btn-ghost btn-sm" id="refreshOperationsBtn"><i class="fas fa-sync"></i> 刷新</button>
+                    </div>
+                    <ul class="timeline" id="operationsTimeline"></ul>
+                </div>
+            </div>
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="title"><i class="fas fa-tasks"></i> 报告管理</div>
+                    <span class="sub">批量报告汇总与导出</span>
+                </div>
+                <div class="management-toolbar">
+                    <button class="filter-pill active" data-filter="all">全部</button>
+                    <button class="filter-pill" data-filter="fire">火情</button>
+                    <button class="filter-pill" data-filter="safe">安全</button>
+                    <button class="filter-pill" data-filter="error">异常</button>
+                    <button class="btn btn-ghost btn-sm" id="refreshReportManagementBtn"><i class="fas fa-sync"></i> 刷新</button>
+                    <button class="btn btn-danger btn-sm" id="bulkDeleteReportsBtn" disabled><i class="fas fa-trash"></i> 批量删除</button>
+                    <button class="btn btn-danger btn-sm" id="deleteAllReportsBtn" disabled><i class="fas fa-trash"></i> 全部删除</button>
+                </div>
+                <div class="management-grid" id="reportManagementGrid"></div>
+            </div>
+        </div>
+
         <!-- ===== 系统设置 ===== -->
         <div class="page" id="settingsPage">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
@@ -1306,7 +1878,10 @@ const State = {
     snapshotCount: 0, isAutoSnapshot: false, snapshotTimer: null, isSaving: false,
     currentSource: '未知源', chartData: [], chart: null, lastDetectionTime: 0,
     detectionInterval: 150, currentModel: null, availableModels: [], isSwitching: false,
+    batchFiles: [], batchPreviewMap: {}, batchAnnotatedMap: {}, batchReport: null, isBatchDetecting: false,
     isModalOpen: false, videoPausedForModal: false,
+    latestReport: null, managementFilter: 'all', reportManagementData: [],
+    selectedReportNames: [],
     lastDetectionResult: { boxes: [], fireCount: 0, hasResult: false },
     isRecording: false, isProcessing: false, mediaRecorder: null, recordedChunks: [],
     recordingStartTime: 0, recordingStopTime: 0, recordingTimer: null, recordingSize: 0,
@@ -1330,6 +1905,23 @@ const dom = {
     homeAlertCount: homeAlertCount, homeAlertList: homeAlertList,
     imgAlerts: imgAlerts, imgCount: imgCount, imgAcc: imgAcc, imgStorage: imgStorage,
     imageDropZone: imageDropZone, imageFileInput: imageFileInput, imagePreview: imagePreview,
+    imageBatchFileInput: imageBatchFileInput, batchSelectBtn: batchSelectBtn,
+    exportReportBtn: exportReportBtn, batchMeta: batchMeta,
+    batchSummaryPanel: batchSummaryPanel, batchSummaryStatus: batchSummaryStatus,
+    batchSummaryTotal: batchSummaryTotal, batchSummaryFire: batchSummaryFire,
+    batchSummarySafe: batchSummarySafe, batchSummaryError: batchSummaryError,
+    batchPreviewGrid: batchPreviewGrid, batchDetailPanel: batchDetailPanel,
+    batchDetailCount: batchDetailCount, batchDetailBody: batchDetailBody,
+    recentReportsList: recentReportsList, recentReportsCount: recentReportsCount,
+    deleteAllRecentReportsBtn: deleteAllRecentReportsBtn,
+    reportManagementGrid: reportManagementGrid, bulkDeleteReportsBtn: bulkDeleteReportsBtn,
+    deleteAllReportsBtn: deleteAllReportsBtn, manageTotalReports: manageTotalReports, manageFireReports: manageFireReports,
+    manageSafeReports: manageSafeReports, manageLatestReport: manageLatestReport,
+    refreshReportManagementBtn: refreshReportManagementBtn,
+    operationsHeadline: operationsHeadline, operationsSubline: operationsSubline,
+    operationsStatusBadge: operationsStatusBadge, opHealthStatus: opHealthStatus,
+    opLatestTime: opLatestTime, opAlertRate: opAlertRate, operationsTimeline: operationsTimeline,
+    exportLatestReportBtn: exportLatestReportBtn, refreshOperationsBtn: refreshOperationsBtn,
     detectImageBtn: detectImageBtn, clearImageBtn: clearImageBtn, imageResult: imageResult,
     debugToggleBtn: debugToggleBtn, debugPanel: debugPanel, debugLog: debugLog,
     historyGrid: historyGrid, historyCount: historyCount,
@@ -1367,6 +1959,7 @@ const dom = {
     settingsApiStatus: settingsApiStatus, settingsModelName: settingsModelName,
     settingsRuntime: settingsRuntime, backendStatusText: backendStatusText,
     restartBackendBtn: restartBackendBtn, themeToggleSettings: themeToggleSettings,
+    backendOfflineBanner: backendOfflineBanner,
     modal: imageModal, modalImage: modalImage, modalFireCount: modalFireCount,
     modalTime: modalTime, modalModel: modalModel, modalBoxCount: modalBoxCount,
     modalClose: modalClose, modalLoading: modalLoading,
@@ -1386,9 +1979,9 @@ dom.themeToggleSettings.addEventListener('click', () => { const isDark = documen
 // ================================================================
 // 页面导航
 // ================================================================
-const pages = ['homePage', 'imagePage', 'videoPage', 'statsPage', 'settingsPage'];
-const pageTitles = { homePage: '首页 <span>Dashboard</span>', imagePage: '图片 <span>检测</span>', videoPage: '视频 <span>监控</span>', statsPage: '数据 <span>统计</span>', settingsPage: '系统 <span>设置</span>' };
-const pageIndicators = { homePage: '概览', imagePage: '上传 · 识别 · 分析', videoPage: '实时 · 录制 · 截图', statsPage: '检测数据总览', settingsPage: '配置 · 管理' };
+const pages = ['homePage', 'imagePage', 'videoPage', 'statsPage', 'managePage', 'settingsPage'];
+const pageTitles = { homePage: '首页 <span>Dashboard</span>', imagePage: '图片 <span>检测</span>', videoPage: '视频 <span>监控</span>', statsPage: '数据 <span>统计</span>', managePage: '管理 <span>中心</span>', settingsPage: '系统 <span>设置</span>' };
+const pageIndicators = { homePage: '概览', imagePage: '上传 · 识别 · 分析', videoPage: '实时 · 录制 · 截图', statsPage: '检测数据总览', managePage: '报告 · 导出 · 维护', settingsPage: '配置 · 管理' };
 let currentPage = 'homePage';
 
 function updatePauseUI(isPaused) {
@@ -1604,8 +2197,43 @@ async function uploadModel(file) {
 // 健康检查 & 时钟
 // ================================================================
 async function checkServer() {
-    try { var response = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(5000) }); if (response.ok) { var data = await response.json(); dom.serverStatus.textContent = '在线'; dom.serverStatus.style.color = '#22c55e'; dom.statServerStatus.textContent = '在线'; dom.statServerStatus.style.color = '#22c55e'; dom.settingsApiStatus.textContent = '在线'; dom.settingsApiStatus.style.color = '#22c55e'; dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线'; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; State.isBackendReady = true; if (data.model_name) { dom.currentModelName.textContent = data.model_name; dom.topModelName.textContent = data.model_name; dom.sidebarModel.textContent = data.model_name; dom.statModelName.textContent = data.model_name; dom.settingsModelName.textContent = data.model_name; } } }
-    catch(err) { dom.serverStatus.textContent = '离线'; dom.serverStatus.style.color = '#ef4444'; dom.statServerStatus.textContent = '离线'; dom.statServerStatus.style.color = '#ef4444'; dom.settingsApiStatus.textContent = '离线'; dom.settingsApiStatus.style.color = '#ef4444'; dom.sidebarStatusDot.className = 'dot offline'; dom.sidebarStatusText.textContent = '离线'; dom.backendStatusText.textContent = '❌ 离线'; dom.backendStatusText.style.color = '#ef4444'; State.isBackendReady = false; }
+    try {
+        var response = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(5000) });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+        var data = await response.json();
+        dom.serverStatus.textContent = '在线'; dom.serverStatus.style.color = '#22c55e';
+        dom.statServerStatus.textContent = '在线'; dom.statServerStatus.style.color = '#22c55e';
+        dom.settingsApiStatus.textContent = '在线'; dom.settingsApiStatus.style.color = '#22c55e';
+        dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线';
+        dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e';
+        dom.backendOfflineBanner.style.display = 'none';
+        State.isBackendReady = true;
+        State.latestReport = data.latest_report || State.latestReport || null;
+        if (data.model_name) {
+            dom.currentModelName.textContent = data.model_name; dom.topModelName.textContent = data.model_name;
+            dom.sidebarModel.textContent = data.model_name; dom.statModelName.textContent = data.model_name;
+            dom.settingsModelName.textContent = data.model_name;
+        }
+        await refreshReportSummary();
+        await refreshReportManagement();
+        updateBatchMeta();
+        return true;
+    } catch(err) {
+        dom.serverStatus.textContent = '离线'; dom.serverStatus.style.color = '#ef4444';
+        dom.statServerStatus.textContent = '离线'; dom.statServerStatus.style.color = '#ef4444';
+        dom.settingsApiStatus.textContent = '离线'; dom.settingsApiStatus.style.color = '#ef4444';
+        dom.sidebarStatusDot.className = 'dot offline'; dom.sidebarStatusText.textContent = '离线';
+        dom.backendStatusText.textContent = '❌ 离线'; dom.backendStatusText.style.color = '#ef4444';
+        dom.backendOfflineBanner.style.display = 'none';
+        dom.imageResult.textContent = '';
+        dom.imageResult.style.color = '#f59e0b';
+        State.isBackendReady = false;
+        State.latestReport = null;
+        State.reportManagementData = [];
+        renderManagementReports();
+        updateBatchMeta();
+        return false;
+    }
 }
 setTimeout(checkServer, 2000); setInterval(checkServer, 10000);
 function updateClock() { dom.topClock.textContent = formatTime(); }
@@ -1617,7 +2245,7 @@ updateClock(); setInterval(updateClock, 1000);
 var HistoryState = { records: [], maxRecords: 50 };
 function loadHistory() { try { var saved = localStorage.getItem('detection_history'); if (saved) { HistoryState.records = JSON.parse(saved); renderHistory(); } } catch(e) { console.error('加载历史失败:', e); } }
 function saveHistory() { try { localStorage.setItem('detection_history', JSON.stringify(HistoryState.records)); } catch(e) {} }
-function addHistoryRecord(imageData, result) {
+function addHistoryRecord(imageData, result, fileNameOverride) {
     var finalImageData = imageData;
     if (typeof imageData === 'string' && imageData.startsWith('data:image')) {
         if (!imageData.startsWith('data:image/jpeg')) {
@@ -1625,10 +2253,33 @@ function addHistoryRecord(imageData, result) {
         }
     }
     if (!finalImageData || finalImageData === '' || finalImageData === '🔥') { finalImageData = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"%3E%3Crect width="100" height="100" fill="%23e11d48"/%3E%3Ctext x="50" y="55" font-size="40" text-anchor="middle" fill="white"%3E🔥%3C/text%3E%3C/svg%3E'; }
-    var record = { id: Date.now(), timestamp: formatTime(), date: new Date().toLocaleDateString(), imageData: finalImageData, fireCount: result.fireCount || 0, totalBoxes: result.totalBoxes || 0, model: result.model || '默认', threshold: result.threshold || 0.25, fileName: State.currentSource || '未知' };
+    var fileName = fileNameOverride || State.currentSource || '未知';
+    var record = { id: Date.now(), timestamp: formatTime(), date: new Date().toLocaleDateString(), imageData: finalImageData, fireCount: result.fireCount || 0, totalBoxes: result.totalBoxes || 0, model: result.model || '默认', threshold: result.threshold || 0.25, fileName: fileName };
     HistoryState.records.unshift(record);
     if (HistoryState.records.length > HistoryState.maxRecords) HistoryState.records.pop();
     saveHistory(); renderHistory(); dom.imageBadge.textContent = HistoryState.records.length; dom.settingsHistoryCount.textContent = HistoryState.records.length;
+}
+
+function addBatchHistoryRecords(result) {
+    var items = Array.isArray(result && result.results) ? result.results : [];
+    if (!items.length) return;
+    items.forEach(function(item, idx) {
+        if (!item || !item.file_name) return;
+        var imageData = item.image ? ('data:image/jpeg;base64,' + item.image) : (State.batchPreviewMap[item.file_name] || '');
+        if (!imageData) return;
+        addHistoryRecord(imageData, {
+            fireCount: Number(item.fire_count || 0),
+            totalBoxes: Number(item.total || 0),
+            model: item.model || '默认',
+            threshold: Number(item.conf_threshold || getThreshold())
+        }, item.file_name);
+        if (idx >= 0 && HistoryState.records.length > HistoryState.maxRecords) {
+            HistoryState.records.pop();
+        }
+    });
+    saveHistory(); renderHistory();
+    dom.imageBadge.textContent = HistoryState.records.length;
+    dom.settingsHistoryCount.textContent = HistoryState.records.length;
 }
 function deleteHistoryRecord(id) { HistoryState.records = HistoryState.records.filter(function(r){ return r.id !== id; }); saveHistory(); renderHistory(); dom.imageBadge.textContent = HistoryState.records.length; dom.settingsHistoryCount.textContent = HistoryState.records.length; }
 function clearAllHistory() { if (HistoryState.records.length === 0) return; if (confirm('确定要清空所有历史记录吗？')) { HistoryState.records = []; saveHistory(); renderHistory(); dom.imageBadge.textContent = 0; dom.settingsHistoryCount.textContent = 0; addDebugLog('🗑️ 清空所有历史记录', 'info'); showToast('✅ 历史记录已清空', 'success'); } }
@@ -1701,14 +2352,746 @@ dom.imageDropZone.addEventListener('dragover', function(e){ e.preventDefault(); 
 dom.imageDropZone.addEventListener('dragleave', function(){ dom.imageDropZone.classList.remove('dragover'); });
 dom.imageDropZone.addEventListener('drop', function(e){ e.preventDefault(); dom.imageDropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleImageFile(e.dataTransfer.files[0]); });
 dom.imageFileInput.addEventListener('change', function(e){ if (e.target.files.length) handleImageFile(e.target.files[0]); });
+function isSupportedImageFile(file) {
+    if (!file || typeof file.name !== 'string' || !file.name.trim()) return false;
+    var name = file.name.toLowerCase();
+    var validExt = /\.(png|jpg|jpeg|gif|bmp|webp|tif|tiff|jfif)$/i;
+    var mimeOk = !!(file.type && file.type.toLowerCase().startsWith('image/'));
+    return mimeOk || validExt.test(name);
+}
+
+function normalizeBatchFiles(files) {
+    if (!Array.isArray(files)) return [];
+    var valid = files.filter(function(file) {
+        return isSupportedImageFile(file);
+    });
+    var seen = {};
+    return valid.filter(function(file) {
+        var key = (file.name || '').toLowerCase() + ':' + (file.size || 0);
+        if (seen[key]) return false;
+        seen[key] = true;
+        return true;
+    }).slice(0, 20);
+}
+
+function buildBatchPreviewFromFiles(files) {
+    State.batchPreviewMap = {};
+    State.batchAnnotatedMap = {};
+    files.forEach(function(file) {
+        if (!file || !file.name) return;
+        try {
+            var objectUrl = URL.createObjectURL(file);
+            State.batchPreviewMap[file.name] = objectUrl;
+        } catch (err) {
+            addDebugLog('⚠️ 生成批量图片预览失败: ' + file.name + ' - ' + err.message, 'warn');
+        }
+    });
+}
+
+function openBatchPreviewModal(item) {
+    if (!item) return;
+    var name = item.name || '未知文件';
+    var src = item.image ? ('data:image/jpeg;base64,' + item.image) : (item.src || State.batchAnnotatedMap[name] || State.batchPreviewMap[name] || '');
+    if (!src) return;
+    dom.modalImage.src = src;
+    dom.modalImage.alt = name;
+    dom.modalFireCount.textContent = Number(item.fire_count || 0);
+    dom.modalTime.textContent = item.inference_time_ms ? (item.inference_time_ms.toFixed(1) + ' ms') : (item.updated_at || '--');
+    dom.modalModel.textContent = item.model || '默认';
+    dom.modalBoxCount.textContent = Number(item.total || item.box_count || 0);
+    dom.modalLoading.classList.add('hidden');
+    dom.modalImage.style.opacity = '1';
+    openModal();
+    addDebugLog('🖼️ 查看批量图片详情: ' + name, 'info');
+}
+
+function renderBatchPreviewCards(files, includeSelectedOnly) {
+    var list = Array.isArray(files) ? files : [];
+    if (!list.length) {
+        dom.batchPreviewGrid.innerHTML = '';
+        return;
+    }
+
+    dom.batchPreviewGrid.innerHTML = list.map(function(item) {
+        var name = item && item.file_name ? item.file_name : (item && item.name ? item.name : '未知文件');
+        var src = '';
+        if (item && item.image) {
+            src = 'data:image/jpeg;base64,' + item.image;
+            State.batchAnnotatedMap[name] = src;
+        } else if (item && item.file_name && State.batchAnnotatedMap[item.file_name]) {
+            src = State.batchAnnotatedMap[item.file_name];
+        } else if (item && item.file_name && State.batchPreviewMap[item.file_name]) {
+            src = State.batchPreviewMap[item.file_name];
+        } else if (item && item.name && State.batchAnnotatedMap[item.name]) {
+            src = State.batchAnnotatedMap[item.name];
+        } else if (item && item.name && State.batchPreviewMap[item.name]) {
+            src = State.batchPreviewMap[item.name];
+        }
+
+        var status = '安全';
+        var statusClass = 'safe';
+        if (item && item.error) {
+            status = '异常'; statusClass = 'error';
+        } else if (item && Number(item.fire_count || 0) > 0) {
+            status = '火情'; statusClass = 'fire';
+        }
+
+        var total = item && item.total ? item.total : (item && item.box_count ? item.box_count : 0);
+        var sizeText = includeSelectedOnly ? '已选择' : (item && item.error ? item.error : (total + ' 框'));
+        return '<div class="batch-preview-item" data-name="' + name + '" data-src="' + (src || '') + '" data-fire-count="' + (item && item.fire_count ? item.fire_count : 0) + '" data-total="' + total + '" data-model="' + (item && item.model ? item.model : '默认') + '" data-time="' + (item && item.inference_time_ms ? (item.inference_time_ms.toFixed(1) + ' ms') : '') + '" style="cursor:pointer;">' +
+            '<span class="status ' + statusClass + '">' + status + '</span>' +
+            (src ? '<img src="' + src + '" alt="' + name + '" style="width:100%;height:72px;object-fit:cover;border-radius:10px;margin-top:8px;border:1px solid var(--border-color);background:rgba(148,163,184,0.06);" />' : '') +
+            '<div class="name">' + name + '</div>' +
+            '<div class="meta"><span>' + total + ' 框</span><span>' + sizeText + '</span></div>' +
+            '</div>';
+    }).join('');
+
+    dom.batchPreviewGrid.querySelectorAll('.batch-preview-item').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var currentName = this.dataset.name || '未知文件';
+            var item = {
+                name: currentName,
+                src: this.dataset.src || State.batchAnnotatedMap[currentName] || State.batchPreviewMap[currentName] || '',
+                fire_count: Number(this.dataset.fireCount || 0),
+                total: Number(this.dataset.total || 0),
+                model: this.dataset.model || '默认',
+                inference_time_ms: this.dataset.time ? Number(String(this.dataset.time).replace(/[^0-9.]/g, '')) : 0,
+                image: State.batchAnnotatedMap[currentName] ? State.batchAnnotatedMap[currentName].replace(/^data:image\/jpeg;base64,/, '') : ''
+            };
+            openBatchPreviewModal(item);
+        });
+    });
+}
+
 function handleImageFile(file) {
+    if (!isSupportedImageFile(file)) {
+        showToast('请选择有效的图片文件（JPG / PNG / GIF / BMP / WEBP）', 'warning');
+        return;
+    }
     State.currentImageFile = file; State.currentSource = file.name;
+    State.batchFiles = [];
+    State.batchReport = null;
+    dom.imageBatchFileInput.value = '';
+    updateBatchMeta();
     var reader = new FileReader();
     reader.onload = function(e) { dom.imagePreview.src = e.target.result; dom.imagePreview.className = 'image-preview'; dom.imagePreview.style.display = 'block'; dom.imageResult.textContent = '已加载，点击检测'; dom.imageResult.style.color = 'var(--text-secondary)'; dom.detectImageBtn.disabled = false; State.lastResult = null; addDebugLog('📎 加载图片: ' + file.name, 'info'); };
     reader.readAsDataURL(file);
 }
+function renderRecentReports(reports) {
+    var items = Array.isArray(reports) ? reports.slice(0, 5) : [];
+    dom.recentReportsCount.textContent = items.length + ' 条';
+    if (dom.deleteAllRecentReportsBtn) {
+        dom.deleteAllRecentReportsBtn.disabled = items.length === 0;
+    }
+    if (!items.length) {
+        dom.recentReportsList.innerHTML = '<div style="padding:10px 0; color:var(--text-muted); text-align:center; font-size:0.65rem;">暂无报告记录</div>';
+        return;
+    }
+    dom.recentReportsList.innerHTML = items.map(function(report) {
+        var name = report.name || 'report';
+        var size = report.size ? (report.size / 1024).toFixed(1) + ' KB' : '--';
+        var updated = report.updated_at || '--';
+        return '<div class="recent-report-item">' +
+            '<div class="left">' +
+            '<span class="report-name">' + name + '</span>' +
+            '<span class="report-meta">' + size + ' • ' + updated + '</span>' +
+            '</div>' +
+            '<div class="report-inline-actions">' +
+            '  <button class="export-mini" data-report-name="' + name + '"><i class="fas fa-download"></i></button>' +
+            '  <button class="delete-mini" data-report-name="' + name + '" title="删除"><i class="fas fa-trash"></i></button>' +
+            '</div>' +
+            '</div>';
+    }).join('');
+
+    dom.recentReportsList.querySelectorAll('.export-mini').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var name = this.dataset.reportName;
+            if (!name) return;
+            if (/\.html$/i.test(name)) exportReportFile(name, 'html');
+            else exportReportFile(name, 'json');
+        });
+    });
+
+    dom.recentReportsList.querySelectorAll('.delete-mini').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var name = this.dataset.reportName;
+            if (!name) return;
+            deleteReportFile(name);
+        });
+    });
+}
+
+function renderBatchSummary(result) {
+    var results = Array.isArray(result && result.results) ? result.results : [];
+    if (!results.length) {
+        dom.batchSummaryPanel.style.display = 'none';
+        return;
+    }
+
+    State.batchAnnotatedMap = {};
+    results.forEach(function(item) {
+        if (item && item.file_name) {
+            if (item.image) {
+                var annotated = 'data:image/jpeg;base64,' + item.image;
+                State.batchAnnotatedMap[item.file_name] = annotated;
+                State.batchPreviewMap[item.file_name] = annotated;
+            } else if (State.batchPreviewMap[item.file_name]) {
+                State.batchAnnotatedMap[item.file_name] = State.batchPreviewMap[item.file_name];
+            }
+        }
+    });
+
+    var total = Number(result.total_images || results.length || 0);
+    var fire = Number(result.fire_images || 0);
+    var safe = Number(result.safe_images || 0);
+    var errors = results.filter(function(item) { return item && item.error; }).length;
+
+    dom.batchSummaryStatus.textContent = fire > 0 ? '检测完成' : '安全状态';
+    dom.batchSummaryTotal.textContent = total;
+    dom.batchSummaryFire.textContent = fire;
+    dom.batchSummarySafe.textContent = safe;
+    dom.batchSummaryError.textContent = errors;
+    dom.batchSummaryPanel.style.display = 'block';
+
+    renderBatchPreviewCards(results, false);
+
+    dom.batchDetailBody.innerHTML = results.map(function(item) {
+        var name = item && item.file_name ? item.file_name : '未知文件';
+        var hasError = !!(item && item.error);
+        var fireCount = Number(item && item.fire_count ? item.fire_count : 0);
+        var boxCount = Number(item && item.total ? item.total : 0);
+        var statusText = hasError ? '异常' : (fireCount > 0 ? '火情' : '安全');
+        var statusClass = hasError ? 'error' : (fireCount > 0 ? 'fire' : 'safe');
+        var timeMs = item && item.inference_time_ms ? item.inference_time_ms.toFixed(1) + ' ms' : '0.0 ms';
+        return '<tr>' +
+            '<td>' + name + '</td>' +
+            '<td class="status-cell ' + statusClass + '">' + statusText + '</td>' +
+            '<td>' + fireCount + '</td>' +
+            '<td>' + boxCount + '</td>' +
+            '<td>' + timeMs + '</td>' +
+            '</tr>';
+    }).join('');
+    dom.batchDetailCount.textContent = results.length + ' 项';
+    dom.batchDetailPanel.style.display = results.length ? 'block' : 'none';
+}
+
+function renderOperationsOverview() {
+    var items = Array.isArray(State.reportManagementData) ? State.reportManagementData : [];
+    var latest = State.latestReport && State.latestReport.name ? State.latestReport : (items[0] && items[0].summary ? items[0].summary : null);
+    var total = items.length;
+    var fire = items.filter(function(item) { return item && item.summary && item.summary.fire_images > 0; }).length;
+    var safe = items.filter(function(item) { return item && item.summary && item.summary.safe_images > 0; }).length;
+    var alertRate = total ? Math.round((fire / total) * 100) : 0;
+
+    dom.manageTotalReports.textContent = String(total);
+    dom.manageFireReports.textContent = String(fire);
+    dom.manageSafeReports.textContent = String(safe);
+    dom.manageLatestReport.textContent = latest && latest.generated_at ? latest.generated_at.slice(11, 16) : (latest && latest.updated_at ? latest.updated_at.slice(11, 16) : '--');
+
+    dom.opHealthStatus.textContent = State.isBackendReady ? '在线' : '离线';
+    dom.opLatestTime.textContent = latest && latest.generated_at ? latest.generated_at.split(' ')[0] : (State.latestReport && State.latestReport.updated_at ? State.latestReport.updated_at.split(' ')[0] : '--');
+    dom.opAlertRate.textContent = alertRate + '%';
+    dom.operationsHeadline.textContent = fire > 0 ? '存在火情风险' : '系统运行正常';
+    dom.operationsSubline.textContent = total ? '共 ' + total + ' 份报告，火情占比 ' + alertRate + '%' : '暂无报告记录';
+
+    if (!State.isBackendReady) {
+        dom.operationsStatusBadge.textContent = '● 离线';
+        dom.operationsStatusBadge.className = 'status-badge offline';
+    } else if (fire > 0) {
+        dom.operationsStatusBadge.textContent = '● 警告';
+        dom.operationsStatusBadge.className = 'status-badge danger';
+    } else if (alertRate >= 30) {
+        dom.operationsStatusBadge.textContent = '● 偏高';
+        dom.operationsStatusBadge.className = 'status-badge warning';
+    } else {
+        dom.operationsStatusBadge.textContent = '● 正常';
+        dom.operationsStatusBadge.className = 'status-badge';
+    }
+
+    var entries = [];
+    if (latest) {
+        var latestName = latest.report_name || latest.name || '批量检测';
+        var latestTime = latest.generated_at || latest.updated_at || '刚刚';
+        entries.push({ text: '最新报告已生成：' + latestName, time: latestTime });
+    }
+    entries.push({ text: '服务状态：' + (State.isBackendReady ? '后端在线，等待下一批处理' : '后端离线，请检查服务'), time: new Date().toLocaleTimeString('zh-CN', { hour12: false }) });
+    if (fire > 0) {
+        entries.push({ text: '检测到 ' + fire + ' 份火情报告，建议优先查看', time: '立即' });
+    } else {
+        entries.push({ text: '安全报告占比较高，当前系统运行稳定', time: '正常' });
+    }
+    dom.operationsTimeline.innerHTML = entries.slice(0, 4).map(function(entry) {
+        return '<li><span class="dot"></span><div><div class="text">' + entry.text + '</div><div class="time">' + entry.time + '</div></div></li>';
+    }).join('');
+}
+
+function updateBulkDeleteButtonState() {
+    if (!dom.bulkDeleteReportsBtn) return;
+    var selectedCount = State.selectedReportNames.length;
+    dom.bulkDeleteReportsBtn.disabled = selectedCount === 0;
+    dom.bulkDeleteReportsBtn.innerHTML = '<i class="fas fa-trash"></i> ' + (selectedCount ? '删除选中 (' + selectedCount + ')' : '批量删除');
+}
+
+function renderManagementReports() {
+    var items = Array.isArray(State.reportManagementData) ? State.reportManagementData : [];
+    var filter = State.managementFilter || 'all';
+    var filtered = items.filter(function(item) {
+        if (filter === 'all') return true;
+        if (filter === 'fire') return (item && item.summary && item.summary.fire_images > 0) || (!item.summary && item.fire_count > 0);
+        if (filter === 'safe') return (item && item.summary && item.summary.safe_images > 0) || (!item.summary && item.fire_count === 0);
+        if (filter === 'error') return !!(item && item.error);
+        return true;
+    });
+
+    renderOperationsOverview();
+    updateBulkDeleteButtonState();
+
+    if (!filtered.length) {
+        dom.reportManagementGrid.innerHTML = '<div class="management-card empty-state-card" style="grid-column:1 / -1; text-align:center; color:var(--text-muted);">暂无符合条件的报告</div>';
+        return;
+    }
+
+    var selectedSet = {};
+    State.selectedReportNames.forEach(function(name) { selectedSet[name] = true; });
+
+    dom.reportManagementGrid.innerHTML = filtered.map(function(item) {
+        var summary = item && item.summary ? item.summary : {};
+        var fireCount = Number(summary.fire_images || 0);
+        var safeCount = Number(summary.safe_images || 0);
+        var totalCount = Number(summary.total_images || 0);
+        var title = item && item.name ? item.name : 'report';
+        var statusClass = fireCount > 0 ? 'fire' : (safeCount > 0 ? 'safe' : 'empty');
+        var statusText = fireCount > 0 ? '火情' : (safeCount > 0 ? '安全' : '空白');
+        var generatedAt = summary.generated_at || item.updated_at || '--';
+        var htmlName = title.replace(/\.json$/i, '.html');
+        var isSelected = !!selectedSet[title];
+        var cardHtml = '<div class="management-card">' +
+            '<div class="management-card-header">' +
+            '  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
+            '    <input type="checkbox" class="report-select" data-name="' + title + '" ' + (isSelected ? 'checked' : '') + ' />' +
+            '  </label>' +
+            '  <div class="management-card-title">' + title + '</div>' +
+            '  <span class="management-card-status ' + statusClass + '">' + statusText + '</span>' +
+            '</div>' +
+            '<div class="management-metrics">' +
+            '  <div class="management-metric"><span class="label">总数</span><span class="value">' + totalCount + '</span></div>' +
+            '  <div class="management-metric"><span class="label">火情</span><span class="value">' + fireCount + '</span></div>' +
+            '  <div class="management-metric"><span class="label">安全</span><span class="value">' + safeCount + '</span></div>' +
+            '</div>' +
+            '<div class="management-card-footer">' +
+            '  <span class="management-card-meta">' + generatedAt + '</span>' +
+            '  <div class="management-card-actions">' +
+            '    <button class="mini-btn success" data-action="json" data-name="' + title + '">JSON</button>' +
+            '    <button class="mini-btn" data-action="html" data-name="' + htmlName + '">HTML</button>' +
+            '    <button class="mini-btn danger" data-action="delete" data-name="' + title + '">删除</button>' +
+            '  </div>' +
+            '</div>' +
+            '</div>';
+        return cardHtml;
+    }).join('');
+
+    dom.reportManagementGrid.querySelectorAll('.report-select').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+            var name = this.dataset.name || '';
+            if (!name) return;
+            if (this.checked) {
+                if (!State.selectedReportNames.includes(name)) {
+                    State.selectedReportNames.push(name);
+                }
+            } else {
+                State.selectedReportNames = State.selectedReportNames.filter(function(item) { return item !== name; });
+            }
+            updateBulkDeleteButtonState();
+        });
+    });
+
+    dom.reportManagementGrid.querySelectorAll('[data-action]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var action = this.dataset.action;
+            var name = this.dataset.name || '';
+            if (!name) return;
+            if (action === 'delete') {
+                deleteReportFile(name);
+                return;
+            }
+            exportReportFile(name, action === 'html' ? 'html' : 'json');
+        });
+    });
+}
+
+async function deleteSelectedReports() {
+    var names = Array.from(new Set(State.selectedReportNames || []));
+    if (!names.length) {
+        showToast('请选择要删除的报告', 'warning');
+        return;
+    }
+    if (!confirm('确定删除选中的 ' + names.length + ' 份报告吗？')) {
+        return;
+    }
+
+    try {
+        var response = await fetch(API_BASE + '/reports', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ names: names })
+        });
+        if (!response.ok) {
+            var errorText = await response.text();
+            throw new Error(errorText || '批量删除失败');
+        }
+        var payload = await response.json();
+        showToast('✅ 已删除 ' + (payload.count || names.length) + ' 份报告', 'success');
+        State.selectedReportNames = [];
+        updateBulkDeleteButtonState();
+        await refreshReportManagement();
+        await refreshReportSummary();
+    } catch (err) {
+        showToast('❌ 批量删除失败：' + err.message, 'error');
+        addDebugLog('❌ 批量删除失败: ' + err.message, 'error');
+    }
+}
+
+async function deleteAllReports() {
+    try {
+        var response = await fetch(API_BASE + '/reports');
+        if (!response.ok) throw new Error('无法读取报告列表');
+        var data = await response.json();
+        var names = Array.isArray(data.reports) ? data.reports.map(function(item) { return item.name; }).filter(Boolean) : [];
+        if (!names.length) {
+            showToast('暂无可删除的报告', 'warning');
+            return;
+        }
+        if (!confirm('确定删除全部 ' + names.length + ' 份报告吗？')) return;
+
+        var deleteResponse = await fetch(API_BASE + '/reports', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ names: names })
+        });
+        if (!deleteResponse.ok) {
+            var errorText = await deleteResponse.text();
+            throw new Error(errorText || '全部删除失败');
+        }
+        var payload = await deleteResponse.json();
+        showToast('✅ 已删除全部 ' + (payload.count || names.length) + ' 份报告', 'success');
+        State.selectedReportNames = [];
+        updateBulkDeleteButtonState();
+        await refreshReportManagement();
+        await refreshReportSummary();
+    } catch (err) {
+        showToast('❌ 全部删除失败：' + err.message, 'error');
+        addDebugLog('❌ 全部删除失败: ' + err.message, 'error');
+    }
+}
+
+async function deleteReportFile(reportName) {
+    if (!reportName) return;
+    if (!confirm('确定要删除报告：' + reportName + ' 吗？')) return;
+    try {
+        var response = await fetch(API_BASE + '/reports/' + encodeURIComponent(reportName), { method: 'DELETE' });
+        if (!response.ok) {
+            var errorText = await response.text();
+            throw new Error(errorText || '删除失败');
+        }
+        showToast('✅ 已删除报告：' + reportName, 'success');
+        addDebugLog('🗑️ 删除报告: ' + reportName, 'info');
+        await refreshReportManagement();
+        await refreshReportSummary();
+    } catch (err) {
+        showToast('❌ 删除失败：' + err.message, 'error');
+        addDebugLog('❌ 删除报告失败: ' + reportName + ' - ' + err.message, 'error');
+    }
+}
+
+async function refreshReportManagement() {
+    try {
+        var response = await fetch(API_BASE + '/reports');
+        if (!response.ok) return;
+        var data = await response.json();
+        var reportList = Array.isArray(data.reports) ? data.reports : [];
+        var detailItems = await Promise.all(reportList.filter(function(report) { return /\.json$/i.test(report.name); }).map(async function(report) {
+            try {
+                var detailResponse = await fetch(API_BASE + '/reports/' + encodeURIComponent(report.name));
+                if (!detailResponse.ok) return { name: report.name, updated_at: report.updated_at, error: '无法读取报告内容' };
+                var payload = await detailResponse.json();
+                return { name: report.name, updated_at: report.updated_at, summary: payload };
+            } catch (err) {
+                return { name: report.name, updated_at: report.updated_at, error: err.message };
+            }
+        }));
+        State.reportManagementData = detailItems;
+        if (dom.deleteAllReportsBtn) {
+            dom.deleteAllReportsBtn.disabled = detailItems.length === 0;
+        }
+        renderManagementReports();
+    } catch (err) {
+        addDebugLog('⚠️ 刷新管理页报告失败: ' + err.message, 'warn');
+    }
+}
+
+function updateBatchMeta() {
+    if (!State.batchFiles || State.batchFiles.length === 0) {
+        dom.batchMeta.style.color = 'var(--text-secondary)';
+        dom.detectImageBtn.disabled = false;
+        dom.exportReportBtn.disabled = true;
+        if (State.latestReport && State.latestReport.name) {
+            dom.batchMeta.innerHTML = '<strong>最近报告</strong>：' + State.latestReport.name + '<br><span style="color:var(--text-muted);">更新于 ' + (State.latestReport.updated_at || '--') + '</span>';
+            dom.exportReportBtn.disabled = false;
+        } else {
+            dom.batchMeta.textContent = '已选择图片后，点击检测即可开始处理。';
+        }
+        return;
+    }
+
+    dom.detectImageBtn.disabled = false;
+    dom.batchMeta.innerHTML = '<strong>已选择 ' + State.batchFiles.length + ' 张图片</strong>，点击检测即可直接执行批量处理。';
+    dom.batchMeta.style.color = 'var(--text-primary)';
+    if (State.batchReport) {
+        var safeCount = State.batchReport.safe_images || 0;
+        var fireCount = State.batchReport.fire_images || 0;
+        dom.batchMeta.innerHTML = '<strong>已完成批量检测</strong>：' + State.batchReport.total_images + ' 张，火情 ' + fireCount + ' 张，安全 ' + safeCount + ' 张。<br><span style="color:var(--text-muted);">报告：' + State.batchReport.report_name + '</span>';
+        dom.exportReportBtn.disabled = false;
+    } else {
+        dom.exportReportBtn.disabled = true;
+    }
+}
+
+async function refreshReportSummary() {
+    try {
+        var response = await fetch(API_BASE + '/reports');
+        if (!response.ok) return;
+        var data = await response.json();
+        State.latestReport = data.latest_report || null;
+        renderRecentReports(data.reports || []);
+        if (State.latestReport && !State.batchFiles.length) {
+            dom.exportReportBtn.disabled = false;
+        }
+        if (!State.batchReport && !State.batchFiles.length) {
+            updateBatchMeta();
+        }
+    } catch (err) {
+        addDebugLog('⚠️ 获取报告列表失败: ' + err.message, 'warn');
+    }
+}
+
+function resetBatchFiles() {
+    State.batchFiles = [];
+    State.batchReport = null;
+    dom.imageBatchFileInput.value = '';
+    dom.batchSummaryPanel.style.display = 'none';
+    dom.detectImageBtn.disabled = true;
+    updateBatchMeta();
+}
+
+async function syncReportStateAfterBatch() {
+    try {
+        await refreshReportSummary();
+        await refreshReportManagement();
+        renderOperationsOverview();
+        updateBatchMeta();
+    } catch (err) {
+        addDebugLog('⚠️ 批量检测后同步报告状态失败: ' + err.message, 'warn');
+    }
+}
+
+dom.batchSelectBtn.addEventListener('click', function() { dom.imageBatchFileInput.click(); });
+dom.imageBatchFileInput.addEventListener('change', function(e) {
+    var files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    State.currentImageFile = null;
+    State.batchFiles = normalizeBatchFiles(files);
+    if (!State.batchFiles.length) { showToast('请选择图片文件', 'warning'); return; }
+    buildBatchPreviewFromFiles(State.batchFiles);
+    renderBatchPreviewCards(State.batchFiles.map(function(file) {
+        return { file_name: file.name, name: file.name, total: 0, fire_count: 0, image: State.batchPreviewMap[file.name] || '' };
+    }), true);
+    State.batchReport = null;
+    dom.detectImageBtn.disabled = false;
+    updateBatchMeta();
+    showToast('已选择 ' + State.batchFiles.length + ' 张图片，可开始批量检测', 'success');
+    addDebugLog('📁 已选择批量图片: ' + State.batchFiles.length + ' 张', 'info');
+});
+
+document.querySelectorAll('.filter-pill').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        State.managementFilter = this.dataset.filter || 'all';
+        document.querySelectorAll('.filter-pill').forEach(function(item) {
+            item.classList.toggle('active', item === btn);
+        });
+        renderManagementReports();
+    });
+});
+
+dom.refreshReportManagementBtn.addEventListener('click', function() {
+    refreshReportManagement();
+});
+
+if (dom.deleteAllRecentReportsBtn) {
+    dom.deleteAllRecentReportsBtn.addEventListener('click', async function() {
+        try {
+            var response = await fetch(API_BASE + '/reports');
+            if (!response.ok) throw new Error('无法读取报告列表');
+            var data = await response.json();
+            var items = Array.isArray(data.reports) ? data.reports.slice(0, 5) : [];
+            if (!items.length) {
+                showToast('暂无可删除的最近报告', 'warning');
+                return;
+            }
+            var names = items.map(function(item) { return item.name; }).filter(Boolean);
+            if (!names.length) {
+                showToast('暂无可删除的最近报告', 'warning');
+                return;
+            }
+            if (!confirm('确定删除最近展示的 ' + names.length + ' 份报告吗？')) return;
+            var deleteResponse = await fetch(API_BASE + '/reports', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ names: names })
+            });
+            if (!deleteResponse.ok) {
+                var errorText = await deleteResponse.text();
+                throw new Error(errorText || '删除失败');
+            }
+            var payload = await deleteResponse.json();
+            showToast('✅ 已删除最近报告 ' + (payload.count || names.length) + ' 份', 'success');
+            await refreshReportSummary();
+            await refreshReportManagement();
+        } catch (err) {
+            showToast('❌ 删除最近报告失败：' + err.message, 'error');
+            addDebugLog('❌ 删除最近报告失败: ' + err.message, 'error');
+        }
+    });
+}
+
+dom.bulkDeleteReportsBtn.addEventListener('click', deleteSelectedReports);
+dom.deleteAllReportsBtn.addEventListener('click', deleteAllReports);
+
+async function refreshOperationsAction() {
+    try {
+        await refreshReportSummary();
+        await refreshReportManagement();
+        renderOperationsOverview();
+        showToast('✅ 运营中心已刷新', 'success');
+    } catch (err) {
+        showToast('❌ 刷新失败: ' + err.message, 'error');
+    }
+}
+
+dom.refreshOperationsBtn.addEventListener('click', refreshOperationsAction);
+
+dom.exportLatestReportBtn.addEventListener('click', function() {
+    var latestReportName = '';
+    if (State.latestReport && State.latestReport.name) {
+        latestReportName = State.latestReport.name;
+    } else if (State.reportManagementData.length && State.reportManagementData[0].name) {
+        latestReportName = State.reportManagementData[0].name;
+    }
+    if (!latestReportName) {
+        showToast('暂无可导出的最新报告', 'warning');
+        return;
+    }
+    if (/\.html$/i.test(latestReportName)) exportReportFile(latestReportName, 'html');
+    else exportReportFile(latestReportName, 'json');
+});
+
+async function runBatchDetectionFromSelected() {
+    var validFiles = normalizeBatchFiles(State.batchFiles || []);
+    if (!validFiles.length) { showToast('请先选择图片', 'warning'); return; }
+    if (!State.isBackendReady) { showToast('后端服务未就绪，请稍后再试', 'warning'); return; }
+    if (State.isBatchDetecting) {
+        showToast('当前检测任务正在执行，请稍候再试', 'warning');
+        return;
+    }
+    State.batchFiles = validFiles;
+    State.isBatchDetecting = true;
+    dom.detectImageBtn.disabled = true;
+    dom.imageResult.textContent = '⏳ 批量检测中...'; dom.imageResult.style.color = '#f59e0b';
+    try {
+        var formData = new FormData();
+        State.batchFiles.forEach(function(file) { formData.append('files', file, file.name); });
+        formData.append('conf_threshold', String(getThreshold()));
+        formData.append('return_images', 'true');
+        var response = await fetch(API_BASE + '/batch_predict', { method: 'POST', body: formData });
+        if (!response.ok) { var errorText = await response.text(); throw new Error(errorText || '批量检测失败'); }
+        var result = await response.json();
+        State.batchReport = result.report || null;
+        addBatchHistoryRecords(result);
+        if (State.batchReport) {
+            dom.imageResult.innerHTML = '✅ 批量检测完成：' + State.batchReport.fire_images + ' 张火情，' + State.batchReport.safe_images + ' 张安全';
+            dom.imageResult.style.color = '#22c55e';
+            dom.exportReportBtn.disabled = false;
+            renderBatchSummary(result);
+        }
+        updateBatchMeta();
+        await syncReportStateAfterBatch();
+        showToast('✅ 批量检测完成，已生成报告', 'success');
+        addDebugLog('📊 批量检测完成: ' + (result.report && result.report.fire_images || 0) + ' 张火情 / ' + (result.report && result.report.safe_images || 0) + ' 张安全', 'success');
+    } catch (err) {
+        addDebugLog('❌ 批量检测失败: ' + err.message, 'error');
+        showToast('❌ 批量检测失败: ' + err.message, 'error');
+        dom.imageResult.textContent = '❌ 批量检测失败'; dom.imageResult.style.color = '#ef4444';
+    } finally {
+        State.isBatchDetecting = false;
+        dom.detectImageBtn.disabled = !State.batchFiles.length;
+    }
+}
+
+function exportReportFile(reportName, fileType) {
+    var fallbackName = (State.batchReport && (State.batchReport.report_name || State.batchReport.html_name || State.batchReport.json_name)) || (State.latestReport && State.latestReport.name) || '';
+    var baseName = (reportName || fallbackName || '').replace(/\.[^.]+$/i, '');
+    if (!baseName) {
+        showToast('暂无可导出的报告', 'warning');
+        return;
+    }
+    var reportUrl = API_BASE + '/reports/' + baseName + '.' + fileType;
+    var link = document.createElement('a');
+    link.href = reportUrl;
+    link.download = baseName + '.' + fileType;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('✅ 报告已导出：' + baseName + '.' + fileType, 'success');
+}
+
+dom.exportReportBtn.addEventListener('click', function() {
+    if (State.batchReport) {
+        var jsonName = State.batchReport.json_name || '';
+        var htmlName = State.batchReport.html_name || '';
+        if (htmlName) {
+            exportReportFile(htmlName, 'html');
+            return;
+        }
+        if (jsonName) {
+            exportReportFile(jsonName, 'json');
+            return;
+        }
+    }
+    if (State.latestReport && State.latestReport.name) {
+        var latestName = State.latestReport.name;
+        if (/\.html$/i.test(latestName)) exportReportFile(latestName, 'html');
+        else if (/\.json$/i.test(latestName)) exportReportFile(latestName, 'json');
+        else exportReportFile(latestName, 'html');
+        return;
+    }
+    showToast('尚未生成批量检测报告', 'warning');
+});
+
 dom.clearImageBtn.addEventListener('click', function() {
-    State.currentImageFile = null; dom.imagePreview.src = ''; dom.imagePreview.className = 'image-preview'; dom.imagePreview.style.display = 'none'; dom.imageFileInput.value = ''; dom.imageResult.textContent = '等待检测'; dom.imageResult.style.color = 'var(--text-muted)'; dom.detectImageBtn.disabled = true; State.lastResult = null; addDebugLog('🗑️ 清空图片', 'info');
+    State.currentImageFile = null;
+    State.batchFiles = [];
+    State.batchReport = null;
+    dom.imagePreview.src = '';
+    dom.imagePreview.className = 'image-preview';
+    dom.imagePreview.style.display = 'none';
+    dom.imageFileInput.value = '';
+    dom.imageBatchFileInput.value = '';
+    dom.imageResult.textContent = '等待检测';
+    dom.imageResult.style.color = 'var(--text-muted)';
+    dom.detectImageBtn.disabled = true;
+    dom.exportReportBtn.disabled = true;
+    dom.batchSummaryPanel.style.display = 'none';
+    updateBatchMeta();
+    State.lastResult = null; addDebugLog('🗑️ 清空图片', 'info');
 });
 dom.imagePreview.addEventListener('click', function(e) {
     e.stopPropagation(); e.preventDefault();
@@ -1717,6 +3100,10 @@ dom.imagePreview.addEventListener('click', function(e) {
     }
 });
 dom.detectImageBtn.addEventListener('click', async function() {
+    if (State.batchFiles && State.batchFiles.length > 0) {
+        await runBatchDetectionFromSelected();
+        return;
+    }
     if (!State.currentImageFile) { showToast('请先上传图片', 'warning'); return; }
     dom.detectImageBtn.disabled = true; dom.detectImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
     dom.imageResult.textContent = '⏳ 检测中...'; dom.imageResult.style.color = '#f59e0b';
@@ -1734,6 +3121,11 @@ dom.detectImageBtn.addEventListener('click', async function() {
             var imageDataUrl = c.toDataURL('image/jpeg', 0.92);
             dom.imagePreview.src = imageDataUrl; dom.imagePreview.className = 'image-preview has-result'; dom.imagePreview.style.display = 'block';
             State.lastResult = { fireCount: fireCount, time: formatTime(), model: result.model || '默认', boxes: fireBoxes, totalBoxes: boxes.length, threshold: threshold };
+            if (result.report) {
+                State.batchReport = result.report;
+                dom.exportReportBtn.disabled = false;
+                addDebugLog('📄 单张检测已生成报告: ' + result.report.json_name, 'success');
+            }
             addHistoryRecord(imageDataUrl, State.lastResult);
             State.totalDetections++; dom.statTotalDetections.textContent = State.totalDetections;
             if (fireCount > 0) { dom.imageResult.innerHTML = '🔥 检测到 ' + fireCount + ' 处火焰 (点击查看)'; dom.imageResult.style.color = '#e11d48'; dom.imageResult.style.fontWeight = 'bold'; addAlert(fireCount, '图片', State.currentSource); addDebugLog('✅ 检测到 ' + fireCount + ' 处火焰', 'fire'); showToast('🔥 检测到 ' + fireCount + ' 处火焰！', 'error'); }
@@ -1745,6 +3137,7 @@ dom.detectImageBtn.addEventListener('click', async function() {
             else if (boxes.length > 0) item.innerHTML = '<span style="color:#f59e0b;">⚠️ ' + boxes.length + '个目标低于阈值</span><span class="time">' + timeStr + '</span>';
             else item.innerHTML = '<span style="color:#22c55e;">✅ 安全</span><span class="time">' + timeStr + '</span>';
             dom.resultList.prepend(item); while (dom.resultList.children.length > MAX_RESULTS) dom.resultList.removeChild(dom.resultList.lastChild);
+            refreshReportSummary().catch(function() {});
         };
         var reader = new FileReader(); reader.onload = function(e) { img.src = e.target.result; }; reader.readAsDataURL(State.currentImageFile);
     } catch(err) { dom.imageResult.textContent = '❌ 检测失败: ' + err.message; dom.imageResult.style.color = '#ef4444'; addDebugLog('❌ 检测失败: ' + err.message, 'error'); showToast('❌ 检测失败: ' + err.message, 'error'); }
@@ -2005,6 +3398,9 @@ async function init() {
     dom.statModelName.textContent = dom.modelSelect.value === 'default' ? '默认模型' : (dom.modelSelect.value || '未选择');
     dom.settingsModelName.textContent = dom.modelSelect.value === 'default' ? '默认模型' : (dom.modelSelect.value || '未选择');
     dom.settingsHistoryCount.textContent = HistoryState.records.length;
+    await checkServer();
+    await refreshReportSummary();
+    await refreshReportManagement();
     updateDetectUI(true);
     addDebugLog('✅ 系统初始化完成', 'success');
     console.log('🔥 YOLOv8 火焰检测 · 完整版');

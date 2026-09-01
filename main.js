@@ -4,6 +4,7 @@
 
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
+const http = require('http');
 const { spawn, exec } = require('child_process');
 const fs = require('fs');
 const os = require('os');
@@ -38,7 +39,9 @@ let backendProcess = null;
 let backendPort = 8000;
 let isBackendReady = false;
 let backendStartAttempts = 0;
+let backendReadyPoller = null;
 let isQuitting = false;
+let backendStartInProgress = false;
 const MAX_BACKEND_RETRIES = 3;
 
 // ================================================================
@@ -69,8 +72,46 @@ function ensureDataDirectories() {
             console.error(`❌ 创建目录失败: ${dirPath} - ${err.message}`);
         }
     }
+
+    const runtimeModelCandidates = [
+        path.join(__dirname, 'data', 'models'),
+        path.join(__dirname, 'models'),
+        path.join(process.resourcesPath || '', 'models'),
+        path.join(process.resourcesPath || '', 'app', 'models'),
+    ];
+
+    let copiedModel = null;
+    for (const modelDir of runtimeModelCandidates) {
+        if (!modelDir || !fs.existsSync(modelDir)) continue;
+
+        const modelFiles = fs.readdirSync(modelDir).filter((name) => {
+            const ext = path.extname(name).toLowerCase();
+            return ['.pt', '.onnx', '.pth', '.weights'].includes(ext);
+        }).sort();
+
+        for (const modelFile of modelFiles) {
+            const source = path.join(modelDir, modelFile);
+            const target = path.join(dataDir, 'models', modelFile);
+            const shouldCopy = !fs.existsSync(target) || fs.statSync(source).size !== fs.statSync(target).size;
+            if (shouldCopy) {
+                try {
+                    fs.copyFileSync(source, target);
+                    copiedModel = target;
+                    console.log(`📦 已同步模型到运行目录: ${source} -> ${target}`);
+                } catch (err) {
+                    console.warn(`⚠️ 同步模型失败 ${source}: ${err.message}`);
+                }
+            }
+        }
+
+        if (copiedModel) break;
+    }
+
     if (created.length > 0) {
         console.log(`📁 创建目录: ${created.join(', ')}`);
+    }
+    if (copiedModel) {
+        console.log(`📦 可用模型已就绪: ${copiedModel}`);
     }
     return dataDir;
 }
@@ -98,55 +139,112 @@ function getResourcePath() {
     return __dirname;
 }
 
+function killProcessesOnPort(port) {
+    return new Promise((resolve) => {
+        if (!isWin) {
+            resolve([]);
+            return;
+        }
+
+        exec(`netstat -ano | findstr :${port} | findstr LISTENING`, (err, stdout) => {
+            const pids = [...new Set((stdout || '')
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(Boolean)
+                .map(line => line.split(/\s+/).pop())
+                .filter(pid => /^\d+$/.test(pid)))];
+
+            if (!pids.length) {
+                resolve([]);
+                return;
+            }
+
+            let remaining = pids.length;
+            const killed = [];
+
+            pids.forEach((pid) => {
+                exec(`taskkill /F /PID ${pid} >nul 2>&1`, (killErr) => {
+                    if (!killErr) {
+                        killed.push(pid);
+                        console.log(`🧹 已清理占用端口 ${port} 的进程 PID=${pid}`);
+                    } else {
+                        console.warn(`⚠️ 清理端口 ${port} 失败 PID=${pid}: ${killErr.message}`);
+                    }
+
+                    remaining -= 1;
+                    if (remaining === 0) {
+                        resolve(killed);
+                    }
+                });
+            });
+        });
+    });
+}
+
 // ================================================================
-// 查找后端 (优先 backend.exe)
+// 查找后端 (优先 backend.exe，失败时才回退到 Python)
 // ================================================================
 function findBackend() {
     const resourcePath = getResourcePath();
     const possiblePaths = [];
+    const rootBackendExe = path.join(__dirname, 'backend.exe');
+    const distBackendExe = path.join(__dirname, 'dist', 'backend.exe');
+    const condaEnvPython = 'C:\\Users\\hemen\\miniconda3\\envs\\flamegpu\\python.exe';
+    const condaEnvBat = 'C:\\Users\\hemen\\miniconda3\\condabin\\conda.bat';
 
     console.log('🔍 开始查找后端...');
 
-    // 1. 优先查找 backend.exe (打包和开发环境)
+    // 1. 最优先顺序：project root backend.exe > flamegpu python > dist/backend.exe
     if (isWin) {
-        // 开发环境：项目根目录
         if (isDev || !app.isPackaged) {
-            possiblePaths.push(
-                path.join(__dirname, 'backend.exe'),
-                path.join(__dirname, 'dist', 'backend.exe'),
-            );
+            possiblePaths.push(rootBackendExe, distBackendExe);
         }
 
-        // 打包环境：resources 目录
+        // 优先使用真实的 Python 解释器，避免 conda.bat / batch 生成黑框控制台
+        if (fs.existsSync(condaEnvPython)) {
+            possiblePaths.unshift(condaEnvPython);
+        }
+        if (fs.existsSync(condaEnvBat)) {
+            possiblePaths.unshift(condaEnvBat);
+        }
+
         if (app.isPackaged) {
             possiblePaths.push(
                 path.join(resourcePath, 'backend.exe'),
                 path.join(resourcePath, 'app', 'backend.exe'),
                 path.join(path.dirname(app.getPath('exe')), 'backend.exe'),
+                rootBackendExe,
+                distBackendExe
             );
         }
     }
 
-    // 2. 查找 venv (开发环境备用)
-    if (isDev) {
-        possiblePaths.push(
+    // 2. 如果没有有效的 backend.exe，则优先直接使用已验证的 flamegpu Python 环境，避免旧 dist CPU 版本回退
+    if (isWin) {
+        const localPythonCandidates = [
+            path.join(__dirname, 'venv_backup', 'Scripts', 'python.exe'),
             path.join(__dirname, 'venv', 'Scripts', 'python.exe'),
             path.join(__dirname, 'venv', 'bin', 'python3'),
             path.join(__dirname, 'venv311', 'Scripts', 'python.exe'),
-        );
+            path.join(__dirname, '.venv', 'Scripts', 'python.exe'),
+        ];
+
+        if (isDev || !app.isPackaged) {
+            possiblePaths.push(...localPythonCandidates);
+        }
+
+        if (app.isPackaged) {
+            possiblePaths.push(
+                path.join(resourcePath, 'venv_backup', 'Scripts', 'python.exe'),
+                path.join(resourcePath, 'venv', 'Scripts', 'python.exe'),
+                path.join(resourcePath, 'app', 'venv', 'Scripts', 'python.exe'),
+                ...localPythonCandidates,
+            );
+        }
     }
 
-    // 3. 打包环境 venv (备用)
-    if (app.isPackaged) {
-        possiblePaths.push(
-            path.join(resourcePath, 'venv', 'Scripts', 'python.exe'),
-            path.join(resourcePath, 'app', 'venv', 'Scripts', 'python.exe'),
-        );
-    }
-
-    // 4. 系统 Python (兜底)
+    // 3. 系统 Python (兜底)
     if (isWin) {
-        // 常见 Python 安装路径
         for (let v of ['313', '312', '311', '310', '39', '38']) {
             possiblePaths.push(`C:\\Python${v}\\python.exe`);
             possiblePaths.push(`C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Python\\Python${v}\\python.exe`);
@@ -216,13 +314,93 @@ function getBackendScriptPath() {
 // 启动后端
 // ================================================================
 function startBackend() {
+    if (backendStartInProgress || (backendProcess && !backendProcess.killed)) {
+        console.log('ℹ️ 后端已启动或正在启动，跳过重复启动');
+        return;
+    }
+
+    backendStartInProgress = true;
     ensureDataDirectories();
 
+    killProcessesOnPort(backendPort)
+        .then(() => {
+            return new Promise((resolve) => {
+                exec('taskkill /F /IM backend.exe 2>nul', () => resolve());
+            });
+        })
+        .then(() => {
+            launchBackend();
+        })
+        .catch((err) => {
+            console.warn(`⚠️ 清理端口占用失败: ${err.message}`);
+            launchBackend();
+        });
+}
+
+function waitForBackendReady() {
+    if (backendReadyPoller) {
+        clearInterval(backendReadyPoller);
+    }
+
+    const startedAt = Date.now();
+    backendReadyPoller = setInterval(() => {
+        if (isBackendReady) {
+            clearInterval(backendReadyPoller);
+            backendReadyPoller = null;
+            return;
+        }
+
+        const req = http.request({
+            host: '127.0.0.1',
+            port: backendPort,
+            path: '/health',
+            method: 'GET',
+            timeout: 1500,
+        }, (res) => {
+            if (res.statusCode >= 200 && res.statusCode < 500) {
+                isBackendReady = true;
+                clearInterval(backendReadyPoller);
+                backendReadyPoller = null;
+                console.log(`✅ 实际健康检查通过，后端已就绪 on http://127.0.0.1:${backendPort}`);
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send('backend-ready');
+                }
+            }
+            res.resume();
+        });
+
+        req.on('error', () => {
+            // 后端尚未完全就绪，继续轮询
+        });
+
+        req.on('timeout', () => {
+            req.destroy();
+        });
+
+        req.end();
+
+        if (Date.now() - startedAt > 45000) {
+            clearInterval(backendReadyPoller);
+            backendReadyPoller = null;
+            console.warn('⚠️ 健康检查超时，后端可能仍在启动中');
+        }
+    }, 1000);
+}
+
+function launchBackend() {
     const backendPath = findBackend();
-    const isBackendExe = backendPath && backendPath.endsWith('.exe') && fs.existsSync(backendPath);
+    const backendFileName = backendPath ? path.basename(backendPath).toLowerCase() : '';
+    const isBackendExe = backendFileName === 'backend.exe' && backendPath && fs.existsSync(backendPath);
+    const isPythonExecutable = backendFileName === 'python.exe' && backendPath && fs.existsSync(backendPath);
+    const condaBatPath = 'C:\\Users\\hemen\\miniconda3\\condabin\\conda.bat';
+    const condaEnvPath = 'C:\\Users\\hemen\\miniconda3\\envs\\flamegpu\\python.exe';
+    const backendScriptPath = getBackendScriptPath();
+    const useDirectCondaPython = fs.existsSync(condaEnvPath) && !isBackendExe;
+    const useCondaEnv = !isBackendExe && !isPythonExecutable && fs.existsSync(condaBatPath) && fs.existsSync(condaEnvPath);
 
     console.log(`🔧 启动后端: ${backendPath}`);
     console.log(`📂 数据目录: ${dataDir}`);
+    waitForBackendReady();
 
     const env = {
         ...process.env,
@@ -231,64 +409,56 @@ function startBackend() {
         FLAME_DETECT_PORT: String(backendPort),
     };
 
-    // 如果是 backend.exe，直接启动
+    let spawnCommand = backendPath;
+    let spawnArgs = [];
+    let spawnCwd = path.dirname(backendPath);
+
     if (isBackendExe) {
-        console.log('🚀 使用独立后端 (backend.exe)');
-        console.log(`📂 后端目录: ${path.dirname(backendPath)}`);
-
-        backendProcess = spawn(backendPath, [], {
-            cwd: path.dirname(backendPath),
-            env: env,
-            stdio: ['pipe', 'pipe', 'pipe'],
-            windowsHide: true,
-        });
-
-        // 设置超时提醒
-        setTimeout(() => {
-            if (!isBackendReady && backendProcess) {
-                console.log('⏳ 后端正在启动，请稍候...');
-            }
-        }, 5000);
-
+        const rootBackendPath = path.join(__dirname, 'backend.exe');
+        const distBackendPath = path.join(__dirname, 'dist', 'backend.exe');
+        if (backendPath === distBackendPath && fs.existsSync(rootBackendPath)) {
+            console.warn('⚠️ 检测到根目录真实 backend.exe，强制忽略 dist/backend.exe 的旧版本');
+            spawnCommand = rootBackendPath;
+            spawnArgs = [];
+            spawnCwd = path.dirname(rootBackendPath);
+        } else {
+            console.log('🚀 使用独立后端 (backend.exe)');
+            console.log(`📂 后端目录: ${path.dirname(backendPath)}`);
+        }
+    } else if (isPythonExecutable || useDirectCondaPython) {
+        const pythonCommand = useDirectCondaPython ? condaEnvPath : backendPath;
+        console.log('🚀 直接调用 flamegpu Python 解释器启动后端，避免黑框控制台 / conda batch 启动异常');
+        spawnCommand = pythonCommand;
+        spawnArgs = [backendScriptPath];
+        spawnCwd = path.dirname(backendScriptPath);
+    } else if (useCondaEnv) {
+        console.log('🚀 未发现可用 backend.exe，改用已验证的 flamegpu conda 环境启动后端');
+        spawnCommand = condaBatPath;
+        spawnArgs = ['run', '-n', 'flamegpu', 'python', backendScriptPath];
+        spawnCwd = path.dirname(backendScriptPath);
     } else {
-        // 使用 Python + 脚本
-        const scriptPath = getBackendScriptPath();
-
-        if (!fs.existsSync(scriptPath)) {
-            console.error(`❌ 后端脚本不存在: ${scriptPath}`);
-            if (mainWindow) {
-                dialog.showErrorBox(
-                    '启动失败',
-                    `无法找到后端脚本:\n${scriptPath}\n\n请确保应用安装完整。`
-                );
-            }
-            return;
+        console.error('❌ 未找到可用后端：缺少 backend.exe 且未检测到 flamegpu conda 环境。');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            dialog.showErrorBox(
+                '后端启动失败',
+                '未找到可用后端可执行程序，且 flamegpu CUDA 环境不可用。'
+            );
         }
-
-        const scriptDir = path.dirname(scriptPath);
-        const pythonDir = path.dirname(backendPath);
-
-        if (pythonDir && fs.existsSync(pythonDir)) {
-            env.PATH = pythonDir + path.delimiter + (process.env.PATH || '');
-        }
-
-        if (isDev) {
-            const venvSitePackages = path.join(__dirname, 'venv', 'lib', 'python3.11', 'site-packages');
-            if (fs.existsSync(venvSitePackages)) {
-                env.PYTHONPATH = venvSitePackages + path.delimiter + (env.PYTHONPATH || '');
-            }
-        }
-
-        console.log(`🐍 使用 Python: ${backendPath}`);
-        console.log(`📄 脚本: ${scriptPath}`);
-
-        backendProcess = spawn(backendPath, [scriptPath], {
-            cwd: scriptDir,
-            env: env,
-            stdio: ['pipe', 'pipe', 'pipe'],
-            windowsHide: true,
-        });
+        return;
     }
+
+    backendProcess = spawn(spawnCommand, spawnArgs, {
+        cwd: spawnCwd,
+        env: env,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        windowsHide: true,
+    });
+
+    setTimeout(() => {
+        if (!isBackendReady && backendProcess) {
+            console.log('⏳ backend.exe 正在启动，请稍候...');
+        }
+    }, 5000);
 
     // ---- 日志处理 ----
     backendProcess.stdout.on('data', (data) => {
@@ -325,16 +495,24 @@ function startBackend() {
     backendProcess.on('close', (code) => {
         console.log(`🔚 后端进程退出，退出码: ${code}`);
         isBackendReady = false;
+        if (backendReadyPoller) {
+            clearInterval(backendReadyPoller);
+            backendReadyPoller = null;
+        }
+        backendStartInProgress = false;
 
         if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('backend-exited', code);
         }
 
-        // 自动重启
         if (!isQuitting && code !== 0 && code !== null && backendStartAttempts < MAX_BACKEND_RETRIES) {
-            backendStartAttempts++;
+            backendStartAttempts += 1;
             console.log(`🔄 后端异常退出，${backendStartAttempts}/${MAX_BACKEND_RETRIES} 次重试...`);
-            setTimeout(startBackend, 3000);
+            setTimeout(() => {
+                if (!backendProcess && !backendStartInProgress) {
+                    startBackend();
+                }
+            }, 3000);
         } else if (code !== 0) {
             console.error(`❌ 后端多次启动失败，请检查日志`);
             if (mainWindow && !mainWindow.isDestroyed()) {
