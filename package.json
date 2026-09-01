@@ -1,6 +1,6 @@
 {
   "name": "flame-detect-app",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "YOLOv8 火焰检测系统 - 桌面应用",
   "main": "main.js",
   "scripts": {

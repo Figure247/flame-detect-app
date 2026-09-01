@@ -30,3 +30,9 @@ node_modules/
 logs/
 uploads/
 data/
+
+# 临时调试与测试
+tests/
+tmp_*
+tmp_batch_check/
+tmp_index_check.js

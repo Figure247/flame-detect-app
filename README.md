@@ -2,6 +2,10 @@
 
 基于 Electron、FastAPI 和 Ultralytics YOLO 的桌面端火焰检测系统。应用提供图片检测、视频实时监控、检测统计、历史记录和模型管理功能，适合用于本地演示、算法验证和火焰识别场景的快速测试。
 
+当前版本：v2.0.1
+
+> GitHub 仓库简介：FlameDetect Pro 是一款基于 YOLO 的火焰检测桌面应用，支持图片/视频检测、实时监控、模型管理、检测统计与历史结果导出，适合本地部署和算法验证。
+
 ## 功能
 
 - **图片检测**：上传 JPG、JPEG、PNG、BMP 或 TIFF 图片，查看检测框、火焰数量、置信度和推理耗时。
@@ -128,21 +132,23 @@ npm run build:linux
 
 构建产物输出到 `dist/`。Windows 安装包使用 NSIS，应用名称为 **FlameDetect Pro**。
 
-## 发布后端容器包
+## GitHub Releases 与 Packages
 
 仓库提供 GitHub Actions 工作流，可将 FastAPI/YOLO 后端构建并发布到 GitHub Container Registry（GHCR）：
 
 ```text
-ghcr.io/figure247/flame-detect-app:v2.0.0
+ghcr.io/figure247/flame-detect-app:v2.0.1
 ```
 
-推送 `v*` 格式的 Git 标签，或在 GitHub Actions 页面手动运行 `Publish backend container`，即可触发构建。运行容器时可挂载数据目录并映射端口：
+- GitHub Releases：推荐在仓库页面创建 `v2.0.1` 之类的版本标签，并附上更新说明。
+- GitHub Packages：推送 `v*` 格式的 Git 标签后，GitHub Actions 会自动构建并发布容器镜像。
+- 安装方式：
 
 ```bash
-docker run --rm -p 8000:8000 -v flame-detect-data:/app/data ghcr.io/figure247/flame-detect-app:v2.0.0
+docker run --rm -p 8000:8000 -v flame-detect-data:/app/data ghcr.io/figure247/flame-detect-app:v2.0.1
 ```
 
-模型文件请放入挂载数据卷的 `models/` 目录，后端启动后可通过 `http://localhost:8000/docs` 查看 API 文档。首次发布后，若希望其他用户无需登录即可拉取镜像，需要在 GitHub Packages 页面将该容器包设置为 Public。
+模型文件请放入挂载数据卷的 `models/` 目录，后端启动后可通过 `http://localhost:8000/docs` 查看 API 文档。首次发布后，如需公开访问，需在 GitHub Packages 页面将该容器包设置为 Public。
 
 ## 项目结构
 
