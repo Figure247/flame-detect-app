@@ -33,6 +33,7 @@ import re
 import logging
 import sys
 import errno
+import html
 import atexit
 from threading import RLock
 
@@ -249,16 +250,7 @@ class ModelManager:
 
         # 尝试立即加载默认模型，确保启动后可直接使用
         if DEFAULT_MODEL_PATH and os.path.exists(DEFAULT_MODEL_PATH):
-            try:
-                success, message = self.load_model(DEFAULT_MODEL_PATH, warmup=False)
-                if success:
-                    logger.info(f"✅ 默认模型已就绪: {self.current_model_name}")
-                else:
-                    logger.warning(f"⚠️ 默认模型立即加载失败，改为后台重试: {message}")
-                    self.executor.submit(self._load_model_async, DEFAULT_MODEL_PATH)
-            except Exception as exc:
-                logger.warning(f"⚠️ 默认模型初始化异常，后台重试: {exc}")
-                self.executor.submit(self._load_model_async, DEFAULT_MODEL_PATH)
+            self.executor.submit(self._load_model_async, DEFAULT_MODEL_PATH)
         else:
             logger.warning("⚠️ 未找到默认模型，请上传模型文件")
 
@@ -567,7 +559,8 @@ def make_report_summary(results: List[Dict[str, Any]], report_name: str = "batch
                 "inference_time_ms": float(item.get('inference_time_ms', 0)),
                 "status": 'fire' if int(item.get('fire_count', 0)) > 0 else 'safe',
                 "model": item.get('model', model_manager.current_model_name),
-                "conf_threshold": float(item.get('conf_threshold', 0.25))
+                "conf_threshold": float(item.get('conf_threshold', 0.25)),
+                "image": item.get('image', '')
             }
             for item in results
         ]
@@ -627,10 +620,26 @@ def save_report_files(report_payload: Dict[str, Any], report_name: str = "batch_
         json_content = json.dumps(report_payload, ensure_ascii=False, indent=2)
         write_report_file(json_path, json_content, is_json=True)
 
-        fire_rows = ''.join(
-            f"<tr><td>{item['file_name']}</td><td>{item['fire_count']}</td><td>{item['total_boxes']}</td><td>{item['inference_time_ms']} ms</td><td>{item['status']}</td></tr>"
-            for item in report_payload.get('items', [])
-        )
+        fire_rows = ''
+        for item in report_payload.get('items', []):
+            status = item.get('status', 'safe')
+            status_class = 'status-fire' if status == 'fire' else ('status-error' if status == 'error' else 'status-safe')
+            status_text = '火情' if status == 'fire' else ('异常' if status == 'error' else '安全')
+            image_data = item.get('image', '')
+            image_html = (
+                f'<img class="result-thumb" src="data:image/jpeg;base64,{html.escape(image_data)}" '
+                f'alt="{html.escape(str(item.get("file_name", "检测图片")))}" loading="lazy" />'
+                if image_data else '<div class="result-thumb empty">暂无图片</div>'
+            )
+            fire_rows += (
+                f'<tr class="{status_class}">'
+                f'<td><div class="result-image">{image_html}</div><span class="file-name">{html.escape(str(item.get("file_name", "unknown")))}</span></td>'
+                f'<td>{int(item.get("fire_count", 0))}</td>'
+                f'<td>{int(item.get("total_boxes", 0))}</td>'
+                f'<td>{float(item.get("inference_time_ms", 0))} ms</td>'
+                f'<td><span class="status-badge">{status_text}</span></td>'
+                '</tr>'
+            )
 
         html_content = f"""<!DOCTYPE html>
 <html lang=\"zh-CN\">
@@ -648,8 +657,18 @@ def save_report_files(report_payload: Dict[str, Any], report_name: str = "batch_
     th, td {{ padding: 10px 12px; border-bottom: 1px solid #334155; text-align: left; }}
     th {{ background: #111827; }}
     tr:nth-child(even) {{ background: rgba(15, 23, 42, 0.4); }}
-    .status-fire {{ color: #f87171; font-weight: 700; }}
-    .status-safe {{ color: #4ade80; font-weight: 700; }}
+    tr.status-fire {{ border-left: 4px solid #ef4444; }}
+    tr.status-safe {{ border-left: 4px solid #22c55e; }}
+    tr.status-error {{ border-left: 4px solid #f59e0b; }}
+    .result-image {{ width: 132px; height: 82px; margin-bottom: 7px; }}
+    .result-thumb {{ width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 8px; border: 1px solid #475569; background: #1e293b; }}
+    .result-thumb.empty {{ display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.75rem; }}
+    .file-name {{ display: block; max-width: 260px; overflow-wrap: anywhere; }}
+    .status-badge {{ display: inline-block; padding: 4px 10px; border-radius: 999px; font-weight: 700; }}
+    .status-fire .status-badge {{ color: #fecaca; background: rgba(239, 68, 68, 0.2); }}
+    .status-safe .status-badge {{ color: #bbf7d0; background: rgba(34, 197, 94, 0.2); }}
+    .status-error .status-badge {{ color: #fde68a; background: rgba(245, 158, 11, 0.2); }}
+    @media (max-width: 640px) {{ body {{ padding: 14px; }} .card {{ padding: 14px; }} table {{ font-size: 0.8rem; }} .result-image {{ width: 96px; height: 60px; }} th, td {{ padding: 8px 6px; }} }}
   </style>
 </head>
 <body>
@@ -815,6 +834,12 @@ async def predict(
             _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
             response["image"] = base64.b64encode(buffer).decode('utf-8')
 
+        report_image = response.get('image', '')
+        if not report_image:
+            annotated = draw_boxes_on_image(img, result["boxes"], result["names"])
+            _, buffer = cv2.imencode('.jpg', annotated, [cv2.IMWRITE_JPEG_QUALITY, 85])
+            report_image = base64.b64encode(buffer).decode('utf-8')
+
         report_results = [{
             "file_name": file.filename,
             "boxes": result["boxes"],
@@ -824,6 +849,7 @@ async def predict(
             "model": result["model_name"],
             "inference_time_ms": result["inference_time_ms"],
             "conf_threshold": result["conf_threshold"],
+            "image": report_image,
         }]
         report_payload = make_report_summary(report_results, report_name="single_detection")
         report_paths = save_report_files(report_payload, report_name="single_detection")

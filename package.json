@@ -7,6 +7,7 @@
     "start": "electron .",
     "build": "electron-builder",
     "build:win": "electron-builder --win --x64",
+    "build:win:single": "powershell -ExecutionPolicy Bypass -File scripts/build-single-installer.ps1",
     "build:mac": "electron-builder --mac --x64",
     "build:linux": "electron-builder --linux",
     "pack": "electron-builder --dir"
@@ -42,6 +43,14 @@
       {
         "from": "start_backend.py",
         "to": "start_backend.py"
+      },
+      {
+        "from": "backend-dist/backend/backend.exe",
+        "to": "backend.exe"
+      },
+      {
+        "from": "backend-dist/backend/_internal",
+        "to": "_internal"
       },
       {
         "from": "data/models",

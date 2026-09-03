@@ -5,7 +5,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require('electron');
 const path = require('path');
 const http = require('http');
-const { spawn, exec } = require('child_process');
+const { spawn, exec, execFileSync } = require('child_process');
 const fs = require('fs');
 const os = require('os');
 const ffmpegPath = require('ffmpeg-static');
@@ -125,6 +125,15 @@ function findFile(possiblePaths) {
             if (p && fs.existsSync(p)) {
                 return p;
             }
+            if (isWin && (p === 'python.exe' || p === 'python')) {
+                const resolvedPath = execFileSync('where.exe', [p], {
+                    encoding: 'utf8',
+                    windowsHide: true,
+                }).split(/\r?\n/).map(item => item.trim()).find(Boolean);
+                if (resolvedPath && fs.existsSync(resolvedPath)) {
+                    return resolvedPath;
+                }
+            }
         } catch (e) {
             // 忽略
         }
@@ -189,8 +198,6 @@ function findBackend() {
     const possiblePaths = [];
     const rootBackendExe = path.join(__dirname, 'backend.exe');
     const distBackendExe = path.join(__dirname, 'dist', 'backend.exe');
-    const condaEnvPython = 'C:\\Users\\hemen\\miniconda3\\envs\\flamegpu\\python.exe';
-    const condaEnvBat = 'C:\\Users\\hemen\\miniconda3\\condabin\\conda.bat';
 
     console.log('🔍 开始查找后端...');
 
@@ -198,14 +205,6 @@ function findBackend() {
     if (isWin) {
         if (isDev || !app.isPackaged) {
             possiblePaths.push(rootBackendExe, distBackendExe);
-        }
-
-        // 优先使用真实的 Python 解释器，避免 conda.bat / batch 生成黑框控制台
-        if (fs.existsSync(condaEnvPython)) {
-            possiblePaths.unshift(condaEnvPython);
-        }
-        if (fs.existsSync(condaEnvBat)) {
-            possiblePaths.unshift(condaEnvBat);
         }
 
         if (app.isPackaged) {
@@ -245,11 +244,12 @@ function findBackend() {
 
     // 3. 系统 Python (兜底)
     if (isWin) {
+        // 优先使用当前开发环境中的 Python，避免选中未安装依赖的旧版本。
+        possiblePaths.push('python.exe', 'python');
         for (let v of ['313', '312', '311', '310', '39', '38']) {
             possiblePaths.push(`C:\\Python${v}\\python.exe`);
             possiblePaths.push(`C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Python\\Python${v}\\python.exe`);
         }
-        possiblePaths.push('python.exe', 'python');
     } else {
         possiblePaths.push('python3', 'python');
     }
@@ -392,11 +392,7 @@ function launchBackend() {
     const backendFileName = backendPath ? path.basename(backendPath).toLowerCase() : '';
     const isBackendExe = backendFileName === 'backend.exe' && backendPath && fs.existsSync(backendPath);
     const isPythonExecutable = backendFileName === 'python.exe' && backendPath && fs.existsSync(backendPath);
-    const condaBatPath = 'C:\\Users\\hemen\\miniconda3\\condabin\\conda.bat';
-    const condaEnvPath = 'C:\\Users\\hemen\\miniconda3\\envs\\flamegpu\\python.exe';
     const backendScriptPath = getBackendScriptPath();
-    const useDirectCondaPython = fs.existsSync(condaEnvPath) && !isBackendExe;
-    const useCondaEnv = !isBackendExe && !isPythonExecutable && fs.existsSync(condaBatPath) && fs.existsSync(condaEnvPath);
 
     console.log(`🔧 启动后端: ${backendPath}`);
     console.log(`📂 数据目录: ${dataDir}`);
@@ -425,23 +421,17 @@ function launchBackend() {
             console.log('🚀 使用独立后端 (backend.exe)');
             console.log(`📂 后端目录: ${path.dirname(backendPath)}`);
         }
-    } else if (isPythonExecutable || useDirectCondaPython) {
-        const pythonCommand = useDirectCondaPython ? condaEnvPath : backendPath;
-        console.log('🚀 直接调用 flamegpu Python 解释器启动后端，避免黑框控制台 / conda batch 启动异常');
-        spawnCommand = pythonCommand;
+    } else if (isPythonExecutable) {
+        console.log('🚀 使用目标电脑的 Python 解释器启动后端');
+        spawnCommand = backendPath;
         spawnArgs = [backendScriptPath];
         spawnCwd = path.dirname(backendScriptPath);
-    } else if (useCondaEnv) {
-        console.log('🚀 未发现可用 backend.exe，改用已验证的 flamegpu conda 环境启动后端');
-        spawnCommand = condaBatPath;
-        spawnArgs = ['run', '-n', 'flamegpu', 'python', backendScriptPath];
-        spawnCwd = path.dirname(backendScriptPath);
     } else {
-        console.error('❌ 未找到可用后端：缺少 backend.exe 且未检测到 flamegpu conda 环境。');
+        console.error('❌ 未找到可用后端：请确认安装包包含 resources\\backend.exe，或目标电脑已安装后端依赖。');
         if (mainWindow && !mainWindow.isDestroyed()) {
             dialog.showErrorBox(
                 '后端启动失败',
-                '未找到可用后端可执行程序，且 flamegpu CUDA 环境不可用。'
+                    '未找到可用后端。请重新安装完整安装包，或准备目标电脑的 Python 后端环境。'
             );
         }
         return;

@@ -1186,6 +1186,18 @@
         .management-card-status.fire { background: rgba(239,68,68,0.12); color:#ef4444; }
         .management-card-status.safe { background: rgba(34,197,94,0.12); color:#22c55e; }
         .management-card-status.empty { background: rgba(245,158,11,0.12); color:#f59e0b; }
+        .management-card.status-fire { border-left: 3px solid #ef4444; }
+        .management-card.status-safe { border-left: 3px solid #22c55e; }
+        .management-card.status-empty { border-left: 3px solid #f59e0b; }
+        .management-preview-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:6px; }
+        .management-preview { position:relative; aspect-ratio:16 / 10; overflow:hidden; border:1px solid var(--page-border, var(--border-color)); border-radius:8px; background:var(--page-surface-alt, var(--bg-input)); cursor:pointer; }
+        .management-preview.featured { grid-column: span 2; aspect-ratio:16 / 9; min-height:120px; }
+        .management-preview img { width:100%; height:100%; display:block; object-fit:cover; transition:transform 0.3s ease, filter 0.3s ease; }
+        .management-preview:hover img { transform:scale(1.06); filter:brightness(1.08); }
+        .management-preview .preview-status { position:absolute; right:4px; bottom:4px; min-width:16px; padding:2px 4px; border-radius:5px; color:#fff; background:rgba(15,23,42,0.78); font-size:0.5rem; text-align:center; }
+        .management-preview .preview-status.fire { background:rgba(225,29,72,0.9); }
+        .management-preview .preview-status.safe { background:rgba(22,163,74,0.9); }
+        .management-preview-empty { display:flex; align-items:center; gap:6px; min-height:48px; padding:0 8px; border:1px dashed var(--page-border, var(--border-color)); border-radius:8px; color:var(--page-muted, var(--text-muted)); font-size:0.58rem; }
         .management-metrics { display:grid; grid-template-columns: repeat(3, minmax(70px, 1fr)); gap:8px; }
         .operations-hero { display:grid; grid-template-columns: 1.2fr 1fr; gap:16px; margin-bottom:16px; }
         .operations-panel {
@@ -1508,7 +1520,7 @@
             <button class="nav-item" data-page="imagePage" onclick="navigateTo('imagePage')"><i class="fas fa-image"></i><span>图片检测</span><span class="badge-nav" id="imageBadge">0</span></button>
             <button class="nav-item" data-page="videoPage" onclick="navigateTo('videoPage')"><i class="fas fa-video"></i><span>视频监控</span><span class="badge-nav" id="videoBadge">0</span></button>
             <button class="nav-item" data-page="statsPage" onclick="navigateTo('statsPage')"><i class="fas fa-chart-pie"></i><span>数据统计</span></button>
-            <button class="nav-item" data-page="managePage" onclick="navigateTo('managePage')"><i class="fas fa-clipboard-list"></i><span>管理页</span></button>
+            <button class="nav-item" data-page="managePage" onclick="navigateTo('managePage')"><i class="fas fa-clipboard-list"></i><span>管理中心</span></button>
             <button class="nav-item" data-page="settingsPage" onclick="navigateTo('settingsPage')"><i class="fas fa-cog"></i><span>系统设置</span></button>
         </nav>
         <div class="sidebar-footer">
@@ -1734,7 +1746,7 @@
             </div>
         </div>
 
-        <!-- ===== 管理页 ===== -->
+        <!-- ===== 管理 ===== -->
         <div class="page" id="managePage">
             <div class="stats-grid">
                 <div class="stat-card"><div class="icon red"><i class="fas fa-file-alt"></i></div><div class="info"><h4 id="manageTotalReports">0</h4><p>总报告</p></div></div>
@@ -2632,6 +2644,29 @@ function updateBulkDeleteButtonState() {
     dom.bulkDeleteReportsBtn.innerHTML = '<i class="fas fa-trash"></i> ' + (selectedCount ? '删除选中 (' + selectedCount + ')' : '批量删除');
 }
 
+function findHistoryPreview(fileName) {
+    var records = Array.isArray(HistoryState.records) ? HistoryState.records : [];
+    for (var index = 0; index < records.length; index += 1) {
+        if (records[index] && records[index].fileName === fileName && records[index].imageData) {
+            return records[index].imageData;
+        }
+    }
+    return '';
+}
+
+function openManagementPreview(item, src) {
+    if (!src) return;
+    dom.modalImage.src = src;
+    dom.modalImage.alt = item.file_name || '检测图片';
+    dom.modalFireCount.textContent = item.fire_count || 0;
+    dom.modalTime.textContent = item.inference_time_ms ? item.inference_time_ms + ' ms' : '--';
+    dom.modalModel.textContent = item.model || '默认';
+    dom.modalBoxCount.textContent = item.total_boxes || item.total || 0;
+    dom.modalLoading.classList.add('hidden');
+    dom.modalImage.style.opacity = '1';
+    openModal();
+}
+
 function renderManagementReports() {
     var items = Array.isArray(State.reportManagementData) ? State.reportManagementData : [];
     var filter = State.managementFilter || 'all';
@@ -2654,7 +2689,7 @@ function renderManagementReports() {
     var selectedSet = {};
     State.selectedReportNames.forEach(function(name) { selectedSet[name] = true; });
 
-    dom.reportManagementGrid.innerHTML = filtered.map(function(item) {
+    dom.reportManagementGrid.innerHTML = filtered.map(function(item, reportIndex) {
         var summary = item && item.summary ? item.summary : {};
         var fireCount = Number(summary.fire_images || 0);
         var safeCount = Number(summary.safe_images || 0);
@@ -2665,7 +2700,17 @@ function renderManagementReports() {
         var generatedAt = summary.generated_at || item.updated_at || '--';
         var htmlName = title.replace(/\.json$/i, '.html');
         var isSelected = !!selectedSet[title];
-        var cardHtml = '<div class="management-card">' +
+        var previewItems = Array.isArray(summary.items) ? summary.items : [];
+        var previewHtml = previewItems.length ? previewItems.map(function(previewItem, previewIndex) {
+            var previewSrc = previewItem.image ? 'data:image/jpeg;base64,' + previewItem.image : (findHistoryPreview(previewItem.file_name) || API_BASE + '/history/' + encodeURIComponent(previewItem.file_name || ''));
+            if (!previewSrc) return '<div class="management-preview-empty"><i class="fas fa-image"></i><span>暂无图像</span></div>';
+            var previewStatus = Number(previewItem.fire_count || 0) > 0 ? 'fire' : 'safe';
+            return '<button type="button" class="management-preview' + (previewIndex === 0 ? ' featured' : '') + '" data-preview-index="' + previewIndex + '" data-preview-src="' + encodeURIComponent(previewSrc) + '" title="查看 ' + previewItem.file_name + '">' +
+                '<img src="' + previewSrc + '" alt="' + previewItem.file_name + '" loading="lazy" />' +
+                '<span class="preview-status ' + previewStatus + '">' + (previewStatus === 'fire' ? '火情' : '安全') + '</span>' +
+                '</button>';
+        }).join('') : '<div class="management-preview-empty"><i class="fas fa-images"></i><span>报告未包含图片条目</span></div>';
+        var cardHtml = '<div class="management-card status-' + statusClass + '" data-report-index="' + reportIndex + '">' +
             '<div class="management-card-header">' +
             '  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">' +
             '    <input type="checkbox" class="report-select" data-name="' + title + '" ' + (isSelected ? 'checked' : '') + ' />' +
@@ -2673,6 +2718,7 @@ function renderManagementReports() {
             '  <div class="management-card-title">' + title + '</div>' +
             '  <span class="management-card-status ' + statusClass + '">' + statusText + '</span>' +
             '</div>' +
+            '<div class="management-preview-grid" aria-label="报告图片预览">' + previewHtml + '</div>' +
             '<div class="management-metrics">' +
             '  <div class="management-metric"><span class="label">总数</span><span class="value">' + totalCount + '</span></div>' +
             '  <div class="management-metric"><span class="label">火情</span><span class="value">' + fireCount + '</span></div>' +
@@ -2689,6 +2735,26 @@ function renderManagementReports() {
             '</div>';
         return cardHtml;
     }).join('');
+
+    dom.reportManagementGrid.querySelectorAll('.management-preview').forEach(function(previewButton) {
+        var previewImage = previewButton.querySelector('img');
+        if (previewImage) {
+            previewImage.addEventListener('error', function() {
+                previewButton.disabled = true;
+                previewButton.classList.remove('featured');
+                previewButton.innerHTML = '<span class="management-preview-empty"><i class="fas fa-image"></i><span>暂无图像</span></span>';
+            });
+        }
+        previewButton.addEventListener('click', function() {
+            var previewIndex = Number(this.dataset.previewIndex);
+            var reportIndex = Number(this.closest('.management-card').dataset.reportIndex);
+            var reportItem = filtered[reportIndex];
+            var previewItems = reportItem && reportItem.summary && Array.isArray(reportItem.summary.items) ? reportItem.summary.items : [];
+            var previewItem = previewItems[previewIndex];
+            var previewSrc = decodeURIComponent(this.dataset.previewSrc || '');
+            if (previewItem) openManagementPreview(previewItem, previewSrc);
+        });
+    });
 
     dom.reportManagementGrid.querySelectorAll('.report-select').forEach(function(cb) {
         cb.addEventListener('change', function() {
@@ -2825,7 +2891,7 @@ async function refreshReportManagement() {
         }
         renderManagementReports();
     } catch (err) {
-        addDebugLog('⚠️ 刷新管理页报告失败: ' + err.message, 'warn');
+        addDebugLog('⚠️ 刷新管理报告失败: ' + err.message, 'warn');
     }
 }
 

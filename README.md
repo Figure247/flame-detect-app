@@ -42,7 +42,10 @@ npm install
 npm start
 ```
 
-Windows 也可以双击 `start_app.bat` 启动。启动时 Electron 会优先查找项目根目录中的 `backend.exe`，找不到时再尝试使用虚拟环境或系统 Python 启动 `main.py`。
+Windows 也可以双击 `start_app.bat` 启动。发布时请使用 `npm run build:win`，Electron 会生成 Windows 安装包。目标电脑需要准备 Python 和后端依赖。
+
+如需将 Electron 主程序和 CUDA 后端放进一个安装包，请执行 `npm run build:win:single`。该命令使用 Inno Setup 生成 `dist/FlameDetect-Pro-CUDA-Setup-2.0.1.exe`，后端采用目录模式，避免启动时重复解压大型 CUDA 运行时。目标电脑不需要安装 Python，但需要兼容的 NVIDIA 驱动。
+
 
 ### 方式二：单独启动后端
 

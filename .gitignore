@@ -16,6 +16,8 @@ venv_backup/
 
 # 构建产物
 dist/
+backend-dist/
+build-backend/
 build/
 *.spec
 
