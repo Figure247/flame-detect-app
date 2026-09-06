@@ -597,10 +597,17 @@ function createWindow() {
             hardwareAcceleration: true,
             webgl: true,
         },
-        backgroundColor: '#0f0f1a',
+        backgroundColor: '#f3f5f9',
         show: false,
         transparent: false,
         frame: true,
+        autoHideMenuBar: true,
+        titleBarStyle: 'hidden',
+        titleBarOverlay: {
+            color: '#f3f5f9',
+            symbolColor: '#475569',
+            height: 36,
+        },
     });
 
     // 加载页面
@@ -614,22 +621,7 @@ function createWindow() {
             }
         };
 
-        if (isBackendReady) {
-            showWindow();
-        } else {
-            let attempts = 0;
-            const maxAttempts = 100;
-            const checkReady = setInterval(() => {
-                attempts++;
-                if (isBackendReady || attempts >= maxAttempts) {
-                    clearInterval(checkReady);
-                    showWindow();
-                    if (!isBackendReady) {
-                        console.warn('⚠️ 窗口显示但后端未就绪，可能加载较慢');
-                    }
-                }
-            }, 100);
-        }
+        showWindow();
     });
 
     if (isDev) {
@@ -825,6 +817,19 @@ ipcMain.handle('get-backend-status', () => {
         port: backendPort,
         pid: backendProcess ? backendProcess.pid : null,
     };
+});
+
+ipcMain.handle('set-title-bar-theme', (event, isDark) => {
+    if (!mainWindow || mainWindow.isDestroyed() || typeof mainWindow.setTitleBarOverlay !== 'function') {
+        return { success: false };
+    }
+
+    mainWindow.setTitleBarOverlay({
+        color: isDark ? '#0f0f1a' : '#f3f5f9',
+        symbolColor: isDark ? '#cbd5e1' : '#475569',
+        height: 36,
+    });
+    return { success: true };
 });
 
 ipcMain.handle('restart-backend', () => {

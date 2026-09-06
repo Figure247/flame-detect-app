@@ -118,11 +118,26 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
 
-        .app { display: flex; min-height: 100vh; }
+        .window-titlebar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 110;
+            height: 36px; display: flex; align-items: center;
+            padding: 0 138px 0 16px;
+            background: var(--bg-body); border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
+            -webkit-app-region: drag; user-select: none;
+        }
+        .window-titlebar .brand-mark {
+            width: 20px; height: 20px; margin-right: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            border-radius: 6px; color: #fff; font-size: 0.58rem;
+            background: var(--gradient-fire);
+        }
+        .window-titlebar .brand-caption { letter-spacing: 0.02em; }
+        .app { display: flex; min-height: 100vh; padding-top: 36px; }
 
         /* ===== 侧边栏 ===== */
         .sidebar {
-            position: fixed; top: 0; left: 0; bottom: 0;
+            position: fixed; top: 36px; left: 0; bottom: 0;
             width: 220px;
             background: var(--bg-sidebar);
             border-right: 1px solid var(--border-color);
@@ -1504,9 +1519,54 @@
             .stat-card .icon { width: 30px; height: 30px; font-size: 0.7rem; }
             .stat-card .info h4 { font-size: 0.9rem; }
         }
+
+        /* ===== 启动页 ===== */
+        .startup-screen {
+            position: fixed; inset: 0; z-index: 1000;
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+            background: var(--bg-body);
+            transition: opacity 0.45s ease, visibility 0.45s ease;
+        }
+        .startup-screen.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+        .startup-content {
+            position: relative; z-index: 1; width: min(360px, calc(100% - 48px));
+            text-align: center; animation: startup-rise 0.6s var(--ease-pop) both;
+        }
+        .startup-mark {
+            width: 66px; height: 66px; margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 1.65rem; border-radius: var(--radius-lg);
+            background: var(--gradient-fire); box-shadow: 0 12px 28px rgba(225, 29, 72, 0.28);
+            animation: startup-pulse 1.8s ease-in-out infinite;
+        }
+        .startup-title { margin-bottom: 6px; font-size: 1.35rem; font-weight: 750; letter-spacing: 0.01em; }
+        .startup-subtitle { color: var(--text-muted); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; }
+        .startup-progress { width: 100%; height: 4px; margin: 28px auto 12px; overflow: hidden; border-radius: 4px; background: var(--border-color); }
+        .startup-progress::after {
+            content: ''; display: block; width: 42%; height: 100%; border-radius: inherit;
+            background: var(--gradient-fire); animation: startup-progress 1.35s ease-in-out infinite;
+        }
+        .startup-status { color: var(--text-secondary); font-size: 0.72rem; }
+        @keyframes startup-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes startup-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+        @keyframes startup-progress { 0% { transform: translateX(-120%); } 100% { transform: translateX(280%); } }
     </style>
 </head>
 <body>
+<div class="window-titlebar">
+    <span class="brand-mark"><i class="fas fa-fire"></i></span>
+    <span class="brand-caption">FlameDetect Pro · YOLOv8 火焰检测系统</span>
+</div>
+<div class="startup-screen" id="startupScreen" aria-live="polite">
+    <div class="startup-content">
+        <div class="startup-mark"><i class="fas fa-fire"></i></div>
+        <div class="startup-title">FlameDetect</div>
+        <div class="startup-subtitle">YOLOv8 Fire Detection</div>
+        <div class="startup-progress" aria-hidden="true"></div>
+        <div class="startup-status" id="startupStatus">正在启动检测服务...</div>
+    </div>
+</div>
 <div class="app">
     <!-- ===== 侧边栏 ===== -->
     <aside class="sidebar">
@@ -1727,6 +1787,7 @@
                 <div class="model-selector">
                     <select id="modelSelect"><option value="">加载中...</option></select>
                     <button class="btn btn-primary btn-sm" id="applyModelBtn"><i class="fas fa-check"></i> 切换</button>
+                    <button class="btn btn-danger btn-sm" id="deleteModelBtn" disabled title="删除选中的模型"><i class="fas fa-trash"></i> 删除</button>
                     <button class="btn btn-ghost btn-sm" id="refreshModelListBtn"><i class="fas fa-sync"></i> 刷新</button>
                     <span class="model-status loaded" id="modelStatusIndicator">● 已加载</span>
                 </div>
@@ -1957,7 +2018,7 @@ const dom = {
     statImages: statImages, statFrames: statFrames,
     statModelName: statModelName, statInferenceSpeed: statInferenceSpeed,
     statServerStatus: statServerStatus, statTotalDetections: statTotalDetections,
-    modelSelect: modelSelect, applyModelBtn: applyModelBtn, refreshModelListBtn: refreshModelListBtn,
+    modelSelect: modelSelect, applyModelBtn: applyModelBtn, deleteModelBtn: deleteModelBtn, refreshModelListBtn: refreshModelListBtn,
     modelStatusIndicator: modelStatusIndicator,
     modelDropZone: modelDropZone, modelFileInput: modelFileInput, modelFileName: modelFileName,
     uploadProgress: uploadProgress, progressFill: progressFill,
@@ -1983,6 +2044,7 @@ const dom = {
 function setTheme(isDark) {
     if (isDark) { document.documentElement.setAttribute('data-theme', 'dark'); localStorage.setItem('theme', 'dark'); document.querySelectorAll('.toggle-track .thumb').forEach(el => el.style.left = '18px'); }
     else { document.documentElement.removeAttribute('data-theme'); localStorage.setItem('theme', 'light'); document.querySelectorAll('.toggle-track .thumb').forEach(el => el.style.left = '2px'); }
+    if (isElectron && window.electronAPI && window.electronAPI.setTitleBarTheme) window.electronAPI.setTitleBarTheme(isDark).catch(function(err) { console.warn('标题栏主题同步失败:', err); });
 }
 try { const saved = localStorage.getItem('theme'); if (saved === 'dark') setTheme(true); } catch(e) {}
 dom.themeToggleSide.addEventListener('click', () => { const isDark = document.documentElement.getAttribute('data-theme') === 'dark'; setTheme(!isDark); });
@@ -2130,7 +2192,7 @@ async function fetchModelList() {
 }
 function updateModelSelect() {
     var select = dom.modelSelect; var currentValue = select.value; select.innerHTML = '';
-    if (State.availableModels.length === 0) { var option = document.createElement('option'); option.value = ''; option.textContent = '无可用模型'; select.appendChild(option); select.disabled = true; dom.applyModelBtn.disabled = true; return; }
+    if (State.availableModels.length === 0) { var option = document.createElement('option'); option.value = ''; option.textContent = '无可用模型'; select.appendChild(option); select.disabled = true; dom.applyModelBtn.disabled = true; dom.deleteModelBtn.disabled = true; return; }
     select.disabled = false; dom.applyModelBtn.disabled = false;
     var defaultOption = document.createElement('option'); defaultOption.value = 'default'; defaultOption.textContent = '📌 默认模型'; select.appendChild(defaultOption);
     State.availableModels.forEach(function(model) { var option = document.createElement('option'); option.value = model; var displayName = model.length > 30 ? model.substring(0,28) + '…' : model; option.textContent = '🧠 ' + displayName; select.appendChild(option); });
@@ -2140,6 +2202,7 @@ function updateModelSelect() {
 }
 function updateModelStatusIndicator() {
     var indicator = dom.modelStatusIndicator; var selected = dom.modelSelect.value;
+    dom.deleteModelBtn.disabled = !selected || selected === 'default' || !State.availableModels.includes(selected) || State.isSwitching;
     if (selected === 'default') { indicator.textContent = '● 默认模型'; indicator.className = 'model-status loaded'; }
     else if (selected && State.availableModels.includes(selected)) { indicator.textContent = '● ' + (selected.length > 20 ? selected.substring(0,18) + '…' : selected); indicator.className = 'model-status loaded'; }
     else if (selected) { indicator.textContent = '● 未加载'; indicator.className = 'model-status error'; }
@@ -2172,10 +2235,33 @@ async function switchModel(modelName) {
     } finally { State.isSwitching = false; select.disabled = false; dom.applyModelBtn.disabled = false; dom.applyModelBtn.innerHTML = '<i class="fas fa-check"></i> 切换'; }
 }
 async function refreshModelInfo() {
-    try { var info = await apiRequest('/model_info'); if (info.status === 'loaded') { var name = info.model_name || '未知'; dom.currentModelName.textContent = name; dom.topModelName.textContent = name; dom.sidebarModel.textContent = name; dom.statModelName.textContent = name; dom.settingsModelName.textContent = name; dom.modelClasses.textContent = Object.values(info.classes || {}).join(', ') || '-'; dom.inferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; dom.statInferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; if (info.model_name && !State.availableModels.includes(info.model_name)) { State.availableModels.push(info.model_name); updateModelSelect(); } } else { dom.currentModelName.textContent = '未加载'; dom.topModelName.textContent = '未加载'; dom.sidebarModel.textContent = '未加载'; dom.statModelName.textContent = '未加载'; dom.settingsModelName.textContent = '未加载'; dom.modelClasses.textContent = '-'; } return info; }
+    try { var info = await apiRequest('/model_info'); if (info.status === 'loaded') { var name = info.model_name || '未知'; dom.currentModelName.textContent = name; dom.topModelName.textContent = name; dom.sidebarModel.textContent = name; dom.statModelName.textContent = name; dom.settingsModelName.textContent = name; dom.modelClasses.textContent = Object.values(info.classes || {}).join(', ') || '-'; dom.inferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; dom.statInferenceSpeed.textContent = info.avg_inference_time_ms ? info.avg_inference_time_ms + 'ms' : '--'; if (info.model_name && !State.availableModels.includes(info.model_name)) { State.availableModels.push(info.model_name); updateModelSelect(); } } else { dom.currentModelName.textContent = '未加载'; dom.topModelName.textContent = '未加载'; dom.sidebarModel.textContent = '未加载'; dom.statModelName.textContent = '未加载'; dom.settingsModelName.textContent = '未加载'; dom.modelClasses.textContent = '-'; } updateModelStatusIndicator(); if (info.is_loading) { dom.modelStatusIndicator.textContent = '⏳ 模型加载中...'; dom.modelStatusIndicator.className = 'model-status loading'; } return info; }
     catch(err) { addDebugLog('❌ 获取模型信息失败: ' + err.message, 'error'); dom.currentModelName.textContent = '获取失败'; return null; }
 }
 dom.applyModelBtn.addEventListener('click', async function() { var selected = dom.modelSelect.value; if (!selected) { showToast('请选择一个模型', 'warning'); return; } await switchModel(selected); });
+dom.modelSelect.addEventListener('change', updateModelStatusIndicator);
+dom.deleteModelBtn.addEventListener('click', async function() {
+    var modelName = dom.modelSelect.value;
+    if (!modelName || modelName === 'default' || !State.availableModels.includes(modelName)) return;
+    if (!window.confirm('确定删除模型“' + modelName + '”吗？删除后无法恢复。')) return;
+    dom.deleteModelBtn.disabled = true;
+    dom.deleteModelBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 删除中...';
+    try {
+        await apiRequest('/models', 'DELETE', { model_name: modelName });
+        State.currentModel = null;
+        await fetchModelList();
+        await refreshModelInfo();
+        showToast('✅ 模型已删除: ' + modelName, 'success');
+        addDebugLog('🗑️ 模型已删除: ' + modelName, 'success');
+    } catch (err) {
+        showToast('❌ 删除模型失败: ' + err.message, 'error');
+        addDebugLog('❌ 删除模型失败: ' + err.message, 'error');
+        updateModelStatusIndicator();
+    } finally {
+        dom.deleteModelBtn.innerHTML = '<i class="fas fa-trash"></i> 删除';
+        updateModelStatusIndicator();
+    }
+});
 dom.refreshModelListBtn.addEventListener('click', async function() {
     dom.refreshModelListBtn.disabled = true; dom.refreshModelListBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
     try { await fetchModelList(); await refreshModelInfo(); showToast('✅ 模型列表已刷新', 'success'); addDebugLog('🔄 刷新模型列表完成', 'success'); }
@@ -3440,14 +3526,21 @@ document.addEventListener('keydown', function(e) {
 // ================================================================
 // Electron 集成
 // ================================================================
+var startupInitialized = false;
+function hideStartupScreen() {
+    if (!startupInitialized || (isElectron && !State.isBackendReady)) return;
+    var startupScreen = document.getElementById('startupScreen');
+    if (startupScreen) startupScreen.classList.add('is-hidden');
+}
+
 if (isElectron && window.electronAPI) {
-    window.electronAPI.onBackendReady(function() { console.log('✅ 后端已就绪'); State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线'; showToast('✅ 后端服务已就绪', 'success'); setTimeout(function(){ fetchModelList(); refreshModelInfo(); }, 500); });
+    window.electronAPI.onBackendReady(function() { console.log('✅ 后端已就绪'); State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; dom.sidebarStatusDot.className = 'dot online'; dom.sidebarStatusText.textContent = '在线'; var startupStatus = document.getElementById('startupStatus'); if (startupStatus) startupStatus.textContent = '正在载入工作台...'; hideStartupScreen(); showToast('✅ 后端服务已就绪', 'success'); setTimeout(function(){ fetchModelList(); refreshModelInfo(); }, 500); });
     window.electronAPI.onBackendLog(function(data) { console.log('[Backend]', data); if (State.debugEnabled) addDebugLog('[后端] ' + data, 'info'); });
     window.electronAPI.onBackendError(function(error) { console.error('[Backend Error]', error); dom.backendStatusText.textContent = '❌ 错误'; dom.backendStatusText.style.color = '#ef4444'; showToast('后端错误: ' + error, 'error'); });
     window.electronAPI.onBackendExited(function(code) { console.log('🔚 后端退出，退出码: ' + code); State.isBackendReady = false; dom.backendStatusText.textContent = '❌ 已退出 (' + code + ')'; dom.backendStatusText.style.color = '#ef4444'; dom.sidebarStatusDot.className = 'dot offline'; dom.sidebarStatusText.textContent = '离线'; if (code !== 0) showToast('⚠️ 后端异常退出，退出码: ' + code, 'error'); });
     window.electronAPI.onRestartBackend(function() { showToast('🔄 正在重启后端服务...', 'info'); dom.backendStatusText.textContent = '🔄 重启中...'; dom.backendStatusText.style.color = '#f59e0b'; setTimeout(function(){ checkServer(); }, 3000); });
     dom.restartBackendBtn.addEventListener('click', async function() { try { await window.electronAPI.restartBackend(); showToast('🔄 正在重启后端...', 'info'); } catch(err) { showToast('❌ 重启失败: ' + err.message, 'error'); } });
-    window.electronAPI.getBackendStatus().then(function(status) { if (status.ready) { State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; } });
+    window.electronAPI.getBackendStatus().then(function(status) { if (status.ready) { State.isBackendReady = true; dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e'; hideStartupScreen(); } });
 }
 
 // ================================================================
@@ -3468,6 +3561,8 @@ async function init() {
     await refreshReportSummary();
     await refreshReportManagement();
     updateDetectUI(true);
+    startupInitialized = true;
+    hideStartupScreen();
     addDebugLog('✅ 系统初始化完成', 'success');
     console.log('🔥 YOLOv8 火焰检测 · 完整版');
     console.log('📌 5个功能页面: 首页 | 图片检测 | 视频监控 | 数据统计 | 系统设置');

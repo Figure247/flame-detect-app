@@ -1,11 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files
+
+
+ultralytics_datas = collect_data_files('ultralytics', includes=['cfg/**/*'])
+
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[
+    datas=ultralytics_datas + [
         ('data/models', 'models'),
     ],
     hiddenimports=[],

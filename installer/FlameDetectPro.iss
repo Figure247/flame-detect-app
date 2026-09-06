@@ -37,3 +37,13 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\FlameDetect Pro.exe"; Tasks: 
 
 [Run]
 Filename: "{app}\FlameDetect Pro.exe"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+var
+	ResultCode: Integer;
+begin
+	Result := '';
+	Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM "FlameDetect Pro.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+	Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /T /IM backend.exe', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+end;

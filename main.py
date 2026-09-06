@@ -123,8 +123,10 @@ def find_default_model() -> Optional[str]:
         for ext in ['.pt', '.onnx', '.pth', '.weights']:
             candidates = sorted(
                 directory.glob(f'*{ext}'),
-                key=lambda p: p.stat().st_mtime if p.is_file() else 0,
-                reverse=True,
+                key=lambda p: (
+                    p.name.lower() != 'best.pt',
+                    -(p.stat().st_mtime if p.is_file() else 0),
+                ),
             )
             for file_path in candidates:
                 try:
@@ -372,6 +374,47 @@ class ModelManager:
 
         return False, f"模型不存在: {model_name}"
 
+    def delete_model_by_name(self, model_name: str) -> tuple:
+        """删除应用模型目录中的模型，并在删除当前模型时释放其状态。"""
+        try:
+            model_name = safe_model_filename(model_name)
+        except ValueError as e:
+            return False, str(e)
+
+        model_path = (MODELS_DIR / model_name).resolve()
+        models_root = MODELS_DIR.resolve()
+        if model_path.parent != models_root:
+            return False, "模型路径无效"
+        if not model_path.is_file():
+            return False, f"模型不存在: {model_name}"
+
+        with self._model_lock:
+            if self.is_loading:
+                return False, "模型正在加载中，请稍后..."
+            if self.current_model_path:
+                try:
+                    is_current = Path(self.current_model_path).resolve() == model_path
+                except OSError:
+                    is_current = self.current_model_path == str(model_path)
+                if is_current:
+                    self.current_model = None
+                    self.current_model_path = None
+                    self.current_model_name = "未加载"
+                    self.model_classes = {}
+                    self.cache.clear()
+                    gc.collect()
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
+
+            try:
+                model_path.unlink()
+            except OSError as exc:
+                return False, f"模型删除失败: {exc}"
+            self.scan_models()
+
+        logger.info(f"🗑️ 模型已删除: {model_path}")
+        return True, f"模型已删除: {model_name}"
+
     def _get_cache_key(self, image_data, conf_threshold):
         """生成缓存键"""
         if isinstance(image_data, np.ndarray):
@@ -430,6 +473,7 @@ class ModelManager:
         base_info = {
             "status": "unloaded" if self.current_model is None else "loaded",
             "model_name": self.current_model_name,
+            "is_loading": self.is_loading,
             "classes": self.current_model.names if self.current_model else {},
             "class_count": len(self.current_model.names) if self.current_model else 0,
             "available_models": self.available_models,
@@ -1053,6 +1097,25 @@ async def load_model_api(model_name: str = Body(..., embed=True)):
         "model_name": model_manager.current_model_name,
         "classes": model_manager.current_model.names,
         "class_count": len(model_manager.current_model.names)
+    }
+
+
+@app.delete("/models")
+async def delete_model_api(model_name: str = Body(..., embed=True)):
+    """删除应用模型目录中的指定模型。"""
+    if model_manager.is_loading:
+        raise HTTPException(status_code=409, detail="模型正在加载中，请稍后...")
+
+    success, message = await run_in_threadpool(model_manager.delete_model_by_name, model_name)
+    if not success:
+        status_code = 404 if message.startswith("模型不存在") else 400
+        raise HTTPException(status_code=status_code, detail=message)
+
+    return {
+        "status": "deleted",
+        "message": message,
+        "model_name": model_manager.current_model_name,
+        "available_models": model_manager.available_models,
     }
 
 

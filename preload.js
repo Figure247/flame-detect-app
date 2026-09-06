@@ -22,6 +22,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getAppPath: () => ipcRenderer.invoke('get-app-path'),
     getDataPath: () => ipcRenderer.invoke('get-data-path'),
     convertVideo: (videoData) => ipcRenderer.invoke('convert-video', videoData),
+    setTitleBarTheme: (isDark) => ipcRenderer.invoke('set-title-bar-theme', Boolean(isDark)),
     onBackendReady: (callback) => {
         return ipcRenderer.on('backend-ready', (event, ...args) => callback(...args));
     },
