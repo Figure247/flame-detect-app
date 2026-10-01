@@ -2,7 +2,7 @@
 
 基于 Electron、FastAPI 和 Ultralytics YOLO 的桌面端火焰检测系统。应用提供图片检测、视频实时监控、检测统计、历史记录和模型管理功能，适合用于本地演示、算法验证和火焰识别场景的快速测试。
 
-当前版本：v2.0.1
+当前版本：v2.0.2
 
 > GitHub 仓库简介：FlameDetect Pro 是一款基于 YOLO 的火焰检测桌面应用，支持图片/视频检测、实时监控、模型管理、检测统计与历史结果导出，适合本地部署和算法验证。
 
@@ -44,7 +44,7 @@ npm start
 
 Windows 也可以双击 `start_app.bat` 启动。发布时请使用 `npm run build:win`，Electron 会生成 Windows 安装包。目标电脑需要准备 Python 和后端依赖。
 
-如需将 Electron 主程序和 CUDA 后端放进一个安装包，请执行 `npm run build:win:single`。该命令使用 Inno Setup 生成 `dist/FlameDetect-Pro-CUDA-Setup-2.0.1.exe`，后端采用目录模式，避免启动时重复解压大型 CUDA 运行时。目标电脑不需要安装 Python，但需要兼容的 NVIDIA 驱动。
+如需将 Electron 主程序和 CUDA 后端放进一个安装包，请执行 `npm run build:win:single`。该命令使用 Inno Setup 生成 `dist/FlameDetect-Pro-CUDA-Setup-2.0.2.exe`，后端采用目录模式，避免启动时重复解压大型 CUDA 运行时。目标电脑不需要安装 Python，但需要兼容的 NVIDIA 驱动。
 
 
 ### 方式二：单独启动后端
@@ -140,15 +140,15 @@ npm run build:linux
 仓库提供 GitHub Actions 工作流，可将 FastAPI/YOLO 后端构建并发布到 GitHub Container Registry（GHCR）：
 
 ```text
-ghcr.io/figure247/flame-detect-app:v2.0.1
+ghcr.io/figure247/flame-detect-app:v2.0.2
 ```
 
-- GitHub Releases：推荐在仓库页面创建 `v2.0.1` 之类的版本标签，并附上更新说明。
+- GitHub Releases：推送 `v*` 格式的 Git 标签后，GitHub Actions 会自动创建 Release 并生成更新说明。
 - GitHub Packages：推送 `v*` 格式的 Git 标签后，GitHub Actions 会自动构建并发布容器镜像。
 - 安装方式：
 
 ```bash
-docker run --rm -p 8000:8000 -v flame-detect-data:/app/data ghcr.io/figure247/flame-detect-app:v2.0.1
+docker run --rm -p 8000:8000 -v flame-detect-data:/app/data ghcr.io/figure247/flame-detect-app:v2.0.2
 ```
 
 模型文件请放入挂载数据卷的 `models/` 目录，后端启动后可通过 `http://localhost:8000/docs` 查看 API 文档。首次发布后，如需公开访问，需在 GitHub Packages 页面将该容器包设置为 Public。

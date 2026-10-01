@@ -1,4 +1,4 @@
-#define AppVersion "2.0.1"
+#define AppVersion "2.0.2"
 #define AppName "FlameDetect Pro"
 #define AppPublisher "FlameDetect"
 #define AppDir "..\dist\win-unpacked"

@@ -35,7 +35,7 @@ try {
     & $iscc $iss
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup build failed.' }
 
-    $output = Join-Path $root 'dist\FlameDetect-Pro-CUDA-Setup-2.0.1.exe'
+    $output = Join-Path $root 'dist\FlameDetect-Pro-CUDA-Setup-2.0.2.exe'
     Get-Item $output | Select-Object FullName, Length, LastWriteTime
 }
 finally {
