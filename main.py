@@ -79,6 +79,7 @@ DATA_DIR = choose_writable_data_dir()
 STATIC_DIR = Path(__file__).parent
 UPLOAD_DIR = Path(DATA_DIR) / 'uploads'
 MODELS_DIR = Path(DATA_DIR) / 'models'
+DELETED_MODELS_PATH = Path(DATA_DIR) / 'deleted-models.json'
 REPORTS_DIR = Path(DATA_DIR) / 'reports'
 LOGS_DIR = Path(DATA_DIR) / 'logs'
 HISTORY_DIR = Path(DATA_DIR) / 'history'
@@ -90,16 +91,52 @@ for d in [UPLOAD_DIR, MODELS_DIR, REPORTS_DIR, LOGS_DIR, HISTORY_DIR, FALLBACK_R
 logger.info(f"📁 数据目录: {DATA_DIR}")
 logger.info(f"📁 模型目录: {MODELS_DIR}")
 
+def load_deleted_models() -> set:
+    try:
+        data = json.loads(DELETED_MODELS_PATH.read_text(encoding='utf-8'))
+        return set(data) if isinstance(data, list) else set()
+    except (OSError, json.JSONDecodeError):
+        return set()
+
+
+def save_deleted_models(models: set) -> None:
+    DELETED_MODELS_PATH.write_text(json.dumps(sorted(models), ensure_ascii=False, indent=2), encoding='utf-8')
+
 # ================================================================
 # 配置
 # ================================================================
 def find_default_model() -> Optional[str]:
-    """自动查找可用的默认模型，只允许使用应用自己的数据目录和项目模型目录。"""
+    """自动查找可用的默认模型，兼容开发环境和 PyInstaller/单文件打包环境。"""
+    deleted_models = load_deleted_models()
+
+    runtime_model_dirs = []
+    for env_key in ['FLAME_DETECT_MODELS_DIR', 'MODEL_DIR', 'MODELS_DIR']:
+        env_dir = os.environ.get(env_key)
+        if env_dir:
+            runtime_model_dirs.append(Path(env_dir).expanduser())
+
+    pyinstaller_root = Path(getattr(sys, '_MEIPASS', '')) if getattr(sys, '_MEIPASS', None) else None
+    if pyinstaller_root:
+        runtime_model_dirs.extend([
+            pyinstaller_root / 'models',
+            pyinstaller_root / 'data' / 'models',
+        ])
+
+    exe_dir = Path(sys.executable).resolve().parent if sys.executable else None
+    if exe_dir:
+        runtime_model_dirs.extend([
+            exe_dir / 'models',
+            exe_dir / 'data' / 'models',
+            exe_dir.parent / 'models',
+            exe_dir.parent / 'data' / 'models',
+        ])
+
     candidate_dirs = [
         MODELS_DIR,
         Path(__file__).resolve().parent / 'models',
         Path(__file__).resolve().parent / 'data' / 'models',
         Path.home() / '.flame-detect-app' / 'data' / 'models',
+        *runtime_model_dirs,
     ]
 
     unique_dirs: List[Path] = []
@@ -130,6 +167,8 @@ def find_default_model() -> Optional[str]:
             )
             for file_path in candidates:
                 try:
+                    if file_path.name in deleted_models:
+                        continue
                     if file_path.is_file() and file_path.stat().st_size > 1024 * 1024:
                         logger.info(f"✅ 找到默认模型: {file_path}")
                         return str(file_path)
@@ -261,7 +300,7 @@ class ModelManager:
 
     def _load_model_async(self, model_path):
         """异步加载模型"""
-        success, message = self.load_model(model_path)
+        success, message = self.load_model(model_path, warmup=True)
         if success:
             logger.info(f"✅ 模型异步加载成功: {self.current_model_name}")
         else:
@@ -410,6 +449,12 @@ class ModelManager:
                 model_path.unlink()
             except OSError as exc:
                 return False, f"模型删除失败: {exc}"
+            deleted_models = load_deleted_models()
+            deleted_models.add(model_name)
+            try:
+                save_deleted_models(deleted_models)
+            except OSError as exc:
+                logger.warning(f"⚠️ 保存模型删除记录失败: {exc}")
             self.scan_models()
 
         logger.info(f"🗑️ 模型已删除: {model_path}")
@@ -1045,6 +1090,10 @@ async def upload_model(file: UploadFile = File(...)):
 
         # 保存
         file_path = MODELS_DIR / model_filename
+        deleted_models = load_deleted_models()
+        if model_filename in deleted_models:
+            deleted_models.remove(model_filename)
+            save_deleted_models(deleted_models)
         with open(file_path, "wb") as f:
             f.write(content)
 

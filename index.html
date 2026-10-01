@@ -14,6 +14,7 @@
         media-src 'self' blob:;
     ">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="./alert_policy.js"></script>
     <style>
         /* ===== CSS 变量 ===== */
         :root {
@@ -121,7 +122,7 @@
         .window-titlebar {
             position: fixed; top: 0; left: 0; right: 0; z-index: 110;
             height: 36px; display: flex; align-items: center;
-            padding: 0 138px 0 16px;
+            padding: 0 144px 0 16px;
             background: var(--bg-body); border-bottom: 1px solid var(--border-color);
             color: var(--text-secondary); font-size: 0.7rem; font-weight: 600;
             -webkit-app-region: drag; user-select: none;
@@ -133,6 +134,19 @@
             background: var(--gradient-fire);
         }
         .window-titlebar .brand-caption { letter-spacing: 0.02em; }
+        .window-controls {
+            position: absolute; top: 0; right: 0; height: 36px;
+            display: flex; align-items: stretch;
+            -webkit-app-region: no-drag;
+        }
+        .window-control {
+            width: 46px; height: 36px; border: 0; border-radius: 0;
+            background: transparent; color: var(--text-secondary);
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 0.7rem;
+        }
+        .window-control:hover { background: rgba(100, 116, 139, 0.16); color: var(--text-primary); }
+        .window-control.close:hover { background: #e11d48; color: #fff; }
         .app { display: flex; min-height: 100vh; padding-top: 36px; }
 
         /* ===== 侧边栏 ===== */
@@ -944,7 +958,9 @@
         /* ===== 模态框 ===== */
         .modal {
             display: none;
-            position: fixed; z-index: 2000; inset: 0;
+            position: fixed; z-index: 2000; inset: 0 -8px 0 0;
+            width: auto; height: auto;
+            overflow: hidden;
             background: var(--bg-overlay);
             backdrop-filter: blur(20px);
             justify-content: center; align-items: center;
@@ -976,19 +992,22 @@
             display: block; margin: 0 auto;
         }
         .modal-close {
-            position: absolute; top: 10px; right: 16px;
-            font-size: 1.4rem; color: var(--text-muted);
+            position: absolute; top: 28px; right: 28px;
+            font-size: 1.1rem; line-height: 1; color: #fff;
             cursor: pointer;
             transition: var(--transition-spring);
             z-index: 10;
-            width: 32px; height: 32px;
+            width: 30px; height: 30px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
-            background: var(--bg-input);
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.28);
+            backdrop-filter: blur(6px);
         }
         .modal-close:hover {
-            color: var(--text-primary);
-            background: var(--border-color);
+            color: #fff;
+            background: var(--brand-red);
             transform: scale(1.15) rotate(90deg);
         }
         .modal-info {
@@ -1557,6 +1576,11 @@
 <div class="window-titlebar">
     <span class="brand-mark"><i class="fas fa-fire"></i></span>
     <span class="brand-caption">FlameDetect Pro · YOLOv8 火焰检测系统</span>
+    <div class="window-controls" aria-label="窗口控制">
+        <button class="window-control" id="windowMinimize" aria-label="最小化"><i class="fas fa-minus"></i></button>
+        <button class="window-control" id="windowMaximize" aria-label="最大化"><i class="far fa-square"></i></button>
+        <button class="window-control close" id="windowClose" aria-label="关闭"><i class="fas fa-times"></i></button>
+    </div>
 </div>
 <div class="startup-screen" id="startupScreen" aria-live="polite">
     <div class="startup-content">
@@ -1950,8 +1974,9 @@ const State = {
     currentImageFile: null, isPaused: false, lastResult: null, debugEnabled: false,
     snapshotCount: 0, isAutoSnapshot: false, snapshotTimer: null, isSaving: false,
     currentSource: '未知源', chartData: [], chart: null, lastDetectionTime: 0,
+    lastDrawTime: 0,
     detectionInterval: 150, currentModel: null, availableModels: [], isSwitching: false,
-    batchFiles: [], batchPreviewMap: {}, batchAnnotatedMap: {}, batchReport: null, isBatchDetecting: false,
+    modelReadyForDetect: false, batchFiles: [], batchPreviewMap: {}, batchAnnotatedMap: {}, batchReport: null, isBatchDetecting: false,
     isModalOpen: false, videoPausedForModal: false,
     latestReport: null, managementFilter: 'all', reportManagementData: [],
     selectedReportNames: [],
@@ -1962,6 +1987,7 @@ const State = {
     currentVideoFile: null, isLocalVideo: false, videoUrl: null,
     wasRunning: false, savedPausedState: false, savedCurrentTime: 0, savedDuration: 0,
     hasSavedState: false, isRestoring: false, savedDetectState: true,
+    lastAlertAt: 0, alertWindowTotal: 0, alertWindowStartAt: 0,
 };
 
 // ================================================================
@@ -2037,6 +2063,12 @@ const dom = {
     modalTime: modalTime, modalModel: modalModel, modalBoxCount: modalBoxCount,
     modalClose: modalClose, modalLoading: modalLoading,
 };
+
+if (isElectron && window.electronAPI) {
+    $('windowMinimize').addEventListener('click', function() { window.electronAPI.minimizeWindow(); });
+    $('windowMaximize').addEventListener('click', function() { window.electronAPI.toggleMaximizeWindow(); });
+    $('windowClose').addEventListener('click', function() { window.electronAPI.closeWindow(); });
+}
 
 // ================================================================
 // 主题切换
@@ -2294,6 +2326,23 @@ async function uploadModel(file) {
 // ================================================================
 // 健康检查 & 时钟
 // ================================================================
+async function waitForModelReady(timeoutMs) {
+    var deadline = Date.now() + (timeoutMs || 45000);
+    while (Date.now() < deadline) {
+        try {
+            var info = await apiRequest('/model_info', 'GET', null, 15000);
+            if (info && info.status === 'loaded' && info.model_name) {
+                State.modelReadyForDetect = true;
+                return info;
+            }
+        } catch (err) {
+            addDebugLog('⏳ 等待模型加载中... ' + (err.message || '未知错误'), 'info');
+        }
+        await new Promise(function(resolve) { setTimeout(resolve, 600); });
+    }
+    State.modelReadyForDetect = false;
+    return null;
+}
 async function checkServer() {
     try {
         var response = await fetch(API_BASE + '/health', { signal: AbortSignal.timeout(5000) });
@@ -2306,6 +2355,7 @@ async function checkServer() {
         dom.backendStatusText.textContent = '✅ 运行中'; dom.backendStatusText.style.color = '#22c55e';
         dom.backendOfflineBanner.style.display = 'none';
         State.isBackendReady = true;
+        State.modelReadyForDetect = !!(data && data.model_loaded);
         State.latestReport = data.latest_report || State.latestReport || null;
         if (data.model_name) {
             dom.currentModelName.textContent = data.model_name; dom.topModelName.textContent = data.model_name;
@@ -2326,6 +2376,7 @@ async function checkServer() {
         dom.imageResult.textContent = '';
         dom.imageResult.style.color = '#f59e0b';
         State.isBackendReady = false;
+        State.modelReadyForDetect = false;
         State.latestReport = null;
         State.reportManagementData = [];
         renderManagementReports();
@@ -2423,6 +2474,9 @@ loadHistory();
 // 模态框
 // ================================================================
 function openModal() {
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    if (isElectron && window.electronAPI && window.electronAPI.setTitleBarModal) window.electronAPI.setTitleBarModal(true).catch(function(err) { console.warn('弹窗标题栏同步失败:', err); });
     dom.modal.classList.add('active'); dom.modal.style.display = 'flex'; State.isModalOpen = true;
     if (State.isRunning && !State.isPaused) {
         if (dom.video.readyState >= 2) { var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480; var tempCanvas = document.createElement('canvas'); tempCanvas.width = w; tempCanvas.height = h; var tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(dom.video, 0, 0, w, h); State.modalFrameData = tempCanvas.toDataURL('image/jpeg', 0.7); }
@@ -2430,6 +2484,9 @@ function openModal() {
     }
 }
 function closeModal() {
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+    if (isElectron && window.electronAPI && window.electronAPI.setTitleBarModal) window.electronAPI.setTitleBarModal(false).catch(function(err) { console.warn('弹窗标题栏恢复失败:', err); });
     dom.modal.classList.remove('active'); dom.modal.style.display = 'none'; State.isModalOpen = false; State.modalFrameData = null;
     if (State.isRunning && State.videoPausedForModal) { State.videoPausedForModal = false; dom.video.play().catch(function(){}); updatePauseUI(false); State.lastDetectionTime = Date.now(); addDebugLog('▶️ 恢复视频播放', 'info'); }
 }
@@ -2961,7 +3018,9 @@ async function refreshReportManagement() {
         if (!response.ok) return;
         var data = await response.json();
         var reportList = Array.isArray(data.reports) ? data.reports : [];
-        var detailItems = await Promise.all(reportList.filter(function(report) { return /\.json$/i.test(report.name); }).map(async function(report) {
+        // 只加载最近报告的详情，避免历史报告中的 Base64 预览图一次性占满渲染器内存。
+        var recentReports = reportList.filter(function(report) { return /\.json$/i.test(report.name); }).slice(0, 50);
+        var detailItems = await Promise.all(recentReports.map(async function(report) {
             try {
                 var detailResponse = await fetch(API_BASE + '/reports/' + encodeURIComponent(report.name));
                 if (!detailResponse.ok) return { name: report.name, updated_at: report.updated_at, error: '无法读取报告内容' };
@@ -3299,6 +3358,57 @@ dom.detectImageBtn.addEventListener('click', async function() {
 // ================================================================
 // 警报
 // ================================================================
+function updateVideoFireSummary(fireCount, windowFireCount) {
+    return;
+}
+
+function handleVideoFireAlert(fireCount, sourceType, fileName) {
+    var now = Date.now();
+    if (fireCount <= 0) {
+        if (State.alertWindowStartAt && now - State.alertWindowStartAt >= 5000) {
+            State.alertWindowStartAt = 0;
+            State.alertWindowTotal = 0;
+        }
+        dom.statusDot.className = 'dot green';
+        dom.statusText.textContent = '✅ 安全监控中';
+        dom.videoStatusText.textContent = '✅ 安全';
+        updateVideoFireSummary(0, State.alertWindowTotal || 0);
+        return;
+    }
+
+    var shouldNotify = true;
+    if (typeof AlertPolicy !== 'undefined' && typeof AlertPolicy.shouldReportAlert === 'function') {
+        shouldNotify = AlertPolicy.shouldReportAlert(State, now, fireCount);
+    } else {
+        if (!State.alertWindowStartAt || now - State.alertWindowStartAt >= 5000) {
+            State.alertWindowStartAt = now;
+            State.alertWindowTotal = 0;
+        }
+        State.alertWindowTotal = Number(State.alertWindowTotal || 0) + fireCount;
+        var lastAlertAt = Number(State.lastAlertAt || 0);
+        if (lastAlertAt && now - lastAlertAt < 5000) {
+            shouldNotify = false;
+        } else {
+            State.lastAlertAt = now;
+        }
+    }
+
+    var windowFireCount = Math.max(Number(State.alertWindowTotal || 0), fireCount);
+    updateVideoFireSummary(fireCount, windowFireCount);
+
+    if (shouldNotify) {
+        addAlert(windowFireCount, sourceType, fileName);
+        dom.statusDot.className = 'dot red';
+        dom.statusText.textContent = '⚠️ ' + windowFireCount + ' 处火焰';
+        dom.videoStatusText.textContent = '🔥 ' + windowFireCount + ' 处火焰';
+        return;
+    }
+
+    dom.statusDot.className = 'dot red';
+    dom.statusText.textContent = '⚠️ 近5秒火情数: ' + windowFireCount + ' 处';
+    dom.videoStatusText.textContent = '🔥 近5秒: ' + windowFireCount + ' 处';
+}
+
 function addAlert(fireCount, sourceType, fileName) {
     var displayName = fileName || State.currentSource || '未知源';
     if (!displayName || displayName === '🔥' || displayName === '%F0%9F%94%A5' || displayName.startsWith('%')) displayName = '火焰检测';
@@ -3315,7 +3425,7 @@ function addAlert(fireCount, sourceType, fileName) {
     while (dom.homeAlertList.children.length > MAX_ALERTS) dom.homeAlertList.removeChild(dom.homeAlertList.lastChild);
     var empty1 = dom.alertList.querySelector('div[style]'); if (empty1 && dom.alertList.children.length > 1) empty1.remove();
     var empty2 = dom.homeAlertList.querySelector('div[style]'); if (empty2 && dom.homeAlertList.children.length > 1) empty2.remove();
-    if ('Notification' in window && Notification.permission === 'granted') { new Notification('🔥 火焰检测报警', { body: '检测到 ' + fireCount + ' 处火焰！来源: ' + truncated }); }
+    if ('Notification' in window && Notification.permission === 'granted') { new Notification('🔥 火焰检测报警', { body: '检测到 ' + fireCount + ' 处火焰！来源: ' + truncated + '（近5秒累计）' }); }
 }
 if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
 
@@ -3351,28 +3461,59 @@ var isDraggingProgress = false;
 async function videoLoop() {
     if (!State.isRunning) return;
     if (State.isRestoring) { State.animationId = requestAnimationFrame(videoLoop); return; }
+    if (!State.modelReadyForDetect) {
+        dom.statusDot.className = 'dot yellow';
+        dom.statusText.textContent = '⏳ 模型加载中，等待检测就绪...';
+        dom.videoStatusText.textContent = '⏳ 模型加载中...';
+        try {
+            var modelInfo = await apiRequest('/model_info', 'GET', null, 15000);
+            State.modelReadyForDetect = !!(modelInfo && modelInfo.status === 'loaded' && modelInfo.model_name);
+            if (State.modelReadyForDetect) {
+                addDebugLog('✅ 模型已就绪，开始检测', 'success');
+            }
+        } catch (err) {
+            addDebugLog('⏳ 等待模型就绪: ' + (err.message || '未知错误'), 'info');
+        }
+        State.animationId = requestAnimationFrame(videoLoop);
+        return;
+    }
     var loopStart = performance.now();
+    var now = Date.now();
+    var shouldDrawFrame = !State.lastDrawTime || (now - State.lastDrawTime >= 33);
     if (State.isModalOpen) {
-        if (dom.video.readyState >= 2 && !State.isPaused) { var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480; if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; } dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height); }
+        if (shouldDrawFrame && dom.video.readyState >= 2 && !State.isPaused) {
+            var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
+            if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
+            dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+            State.lastDrawTime = now;
+        }
         var loopEnd2 = performance.now(); State.fpsCounter++; if (loopEnd2 - State.lastFrameTime >= 1000) { State.currentFPS = State.fpsCounter; dom.vidFps.textContent = State.currentFPS; State.fpsCounter = 0; State.lastFrameTime = loopEnd2; }
         State.animationId = requestAnimationFrame(videoLoop); return;
     }
     if (dom.video.readyState >= 2 && !State.isPaused) {
-        var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
-        if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
-        dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+        if (shouldDrawFrame) {
+            var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
+            if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
+            dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+            State.lastDrawTime = now;
+        }
         if (State.lastDetectionResult.hasResult && State.lastDetectionResult.boxes.length > 0) drawBoxesFromCache(State.lastDetectionResult.boxes);
         if (dom.video.ended && dom.video.duration > 0) { dom.statusDot.className = 'dot off'; dom.statusText.textContent = '⏹️ 视频已结束'; dom.videoStatusText.textContent = '⏹️ 已结束'; State.isRunning = false; if (State.animationId) { cancelAnimationFrame(State.animationId); State.animationId = null; } dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48, #e11d48)'; addDebugLog('⏹️ 视频播放结束，检测已停止', 'info'); showToast('⏹️ 视频已结束，检测停止', 'info'); State.wasRunning = false; State.hasSavedState = false; return; }
         if (dom.video.duration && !isDraggingProgress) { var progress = (dom.video.currentTime / dom.video.duration) * 100; dom.videoProgress.value = progress; dom.currentTimeDisplay.textContent = formatVideoTime(dom.video.currentTime); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; }
-        var now = Date.now(); var interval = getDetectInterval();
-        if (State.isDetecting && (now - State.lastDetectionTime >= interval)) {
+        var interval = Math.max(120, getDetectInterval());
+        if (State.isDetecting && (now - State.lastDetectionTime >= interval) && !State.isProcessing) {
             State.lastDetectionTime = now;
-            try { var result = await detectFrame(); var boxes = result.boxes || []; var threshold = getThreshold(); var fireBoxes = boxes.filter(function(b){ return b[4] >= threshold; }); var fireCount = fireBoxes.length; State.lastDetectionResult = { boxes: boxes, fireCount: fireCount, hasResult: true, timestamp: now }; drawBoxesFromCache(boxes); State.frameCount++; dom.homeFrames.textContent = State.frameCount; dom.vidFrames.textContent = State.frameCount; dom.statFrames.textContent = State.frameCount; updateChart(fireCount); if (result.inference_time_ms) { dom.inferenceSpeed.textContent = result.inference_time_ms + 'ms'; dom.statInferenceSpeed.textContent = result.inference_time_ms + 'ms'; } if (fireCount > 0) { addAlert(fireCount, '视频', State.currentSource); dom.statusDot.className = 'dot red'; dom.statusText.textContent = '⚠️ ' + fireCount + ' 处火焰'; dom.videoStatusText.textContent = '🔥 ' + fireCount + ' 处火焰'; if (State.debugEnabled) addDebugLog('🔥 视频检测到 ' + fireCount + ' 处火焰', 'fire'); } else { dom.statusDot.className = 'dot green'; dom.statusText.textContent = '✅ 安全监控中'; dom.videoStatusText.textContent = '✅ 安全'; } var timeStr = formatTime(); var item = document.createElement('div'); item.className = 'item'; if (fireCount > 0) item.innerHTML = '<span style="color:#e11d48;">🔥 ' + fireCount + ' 处火焰</span><span class="time">' + timeStr + '</span>'; else if (boxes.length > 0) item.innerHTML = '<span style="color:#f59e0b;">⚠️ ' + boxes.length + '个目标低于阈值</span><span class="time">' + timeStr + '</span>'; else item.innerHTML = '<span style="color:#22c55e;">✅ 安全</span><span class="time">' + timeStr + '</span>'; dom.resultList.prepend(item); while (dom.resultList.children.length > MAX_RESULTS) dom.resultList.removeChild(dom.resultList.lastChild); } catch(err) { if (State.debugEnabled) addDebugLog('⚠️ 检测错误: ' + err.message, 'warn'); }
+            State.isProcessing = true;
+            detectFrame().then(function(result) {
+                var boxes = result.boxes || []; var threshold = getThreshold(); var fireBoxes = boxes.filter(function(b){ return b[4] >= threshold; }); var fireCount = fireBoxes.length; State.lastDetectionResult = { boxes: boxes, fireCount: fireCount, hasResult: true, timestamp: now }; drawBoxesFromCache(boxes); State.frameCount++; dom.homeFrames.textContent = State.frameCount; dom.vidFrames.textContent = State.frameCount; dom.statFrames.textContent = State.frameCount; updateChart(fireCount); if (result.inference_time_ms) { dom.inferenceSpeed.textContent = result.inference_time_ms + 'ms'; dom.statInferenceSpeed.textContent = result.inference_time_ms + 'ms'; } if (fireCount > 0) { handleVideoFireAlert(fireCount, '视频', State.currentSource); if (State.debugEnabled) addDebugLog('🔥 视频检测到 ' + fireCount + ' 处火焰', 'fire'); } else { dom.statusDot.className = 'dot green'; dom.statusText.textContent = '✅ 安全监控中'; dom.videoStatusText.textContent = '✅ 安全'; updateVideoFireSummary(0, State.alertWindowTotal || 0); } var timeStr = formatTime(); var item = document.createElement('div'); item.className = 'item'; if (fireCount > 0) item.innerHTML = '<span style="color:#e11d48;">🔥 ' + fireCount + ' 处火焰</span><span class="time">' + timeStr + '</span>'; else if (boxes.length > 0) item.innerHTML = '<span style="color:#f59e0b;">⚠️ ' + boxes.length + '个目标低于阈值</span><span class="time">' + timeStr + '</span>'; else item.innerHTML = '<span style="color:#22c55e;">✅ 安全</span><span class="time">' + timeStr + '</span>'; dom.resultList.prepend(item); while (dom.resultList.children.length > MAX_RESULTS) dom.resultList.removeChild(dom.resultList.lastChild); }).catch(function(err) { if (State.debugEnabled) addDebugLog('⚠️ 检测错误: ' + err.message, 'warn'); }).finally(function() { State.isProcessing = false; });
         }
     } else if (dom.video.readyState >= 2 && State.isPaused) {
-        var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
-        if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
-        dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+        if (shouldDrawFrame) {
+            var w = dom.video.videoWidth || 640; var h = dom.video.videoHeight || 480;
+            if (dom.canvas.width !== w || dom.canvas.height !== h) { dom.canvas.width = w; dom.canvas.height = h; }
+            dom.ctx.drawImage(dom.video, 0, 0, dom.canvas.width, dom.canvas.height);
+            State.lastDrawTime = now;
+        }
         if (State.lastDetectionResult.hasResult && State.lastDetectionResult.boxes.length > 0) drawBoxesFromCache(State.lastDetectionResult.boxes);
         if (dom.video.duration && !isDraggingProgress) { var progress = (dom.video.currentTime / dom.video.duration) * 100; dom.videoProgress.value = progress; dom.currentTimeDisplay.textContent = formatVideoTime(dom.video.currentTime); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); dom.videoProgress.style.background = 'linear-gradient(to right, #e11d48 0%, #e11d48 ' + progress + '%, rgba(255,255,255,0.15) ' + progress + '%, rgba(255,255,255,0.15) 100%)'; }
     }
@@ -3386,7 +3527,7 @@ async function videoLoop() {
 function togglePause() { if (!State.isRunning) return; State.isPaused = !State.isPaused; if (State.isPaused) { dom.video.pause(); updatePauseUI(true); if (State.isAutoSnapshot) stopAutoSnapshot(); } else { dom.video.play().catch(function(){}); updatePauseUI(false); } }
 dom.pauseVideoBtn.addEventListener('click', togglePause);
 async function startCamera() {
-    try { var s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); State.stream = s; dom.video.srcObject = s; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; await dom.video.play(); State.currentSource = '📷 摄像头'; dom.videoStatusText.textContent = '📷 摄像头'; State.isPaused = false; updatePauseUI(false); dom.progressContainer.style.display = 'none'; State.lastDetectionTime = Date.now(); State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.isLocalVideo = false; State.videoUrl = null; State.currentVideoFile = null; State.hasSavedState = false; updateDetectUI(true); addDebugLog('📷 摄像头已启动', 'info'); showToast('📷 摄像头已启动', 'success'); startLoop(); }
+    try { var s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }); State.stream = s; dom.video.srcObject = s; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; await dom.video.play(); State.currentSource = '📷 摄像头'; dom.videoStatusText.textContent = '📷 摄像头'; State.isPaused = false; updatePauseUI(false); dom.progressContainer.style.display = 'none'; State.lastDetectionTime = 0; State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.isLocalVideo = false; State.videoUrl = null; State.currentVideoFile = null; State.hasSavedState = false; updateDetectUI(true); addDebugLog('📷 摄像头已启动', 'info'); showToast('📷 摄像头已启动', 'success'); startLoop(); }
     catch(err) { showToast('❌ 无法访问摄像头: ' + err.message, 'error'); alert('无法访问摄像头: ' + err.message); }
 }
 function startLocalVideo(file) {
@@ -3396,7 +3537,7 @@ function startLocalVideo(file) {
     dom.video.pause(); dom.video.removeAttribute('src'); dom.video.load();
     dom.video.src = url; dom.video.style.display = 'block'; dom.canvas.style.display = 'block'; State.currentSource = file.name; dom.videoStatusText.textContent = '🎬 ' + file.name; State.isPaused = false; updatePauseUI(false); dom.progressContainer.style.display = 'block';
     dom.videoProgress.style.background = 'rgba(255,255,255,0.15)'; dom.videoProgress.value = 0; dom.currentTimeDisplay.textContent = '00:00'; dom.durationDisplay.textContent = '00:00';
-    State.lastDetectionTime = Date.now(); State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.wasRunning = false;
+    State.lastDetectionTime = 0; State.lastDetectionResult = { boxes: [], fireCount: 0, hasResult: false }; State.wasRunning = false;
     dom.video.onloadeddata = null; dom.video.onerror = null;
     dom.video.onloadeddata = function() { dom.video.play().catch(function(){}); dom.durationDisplay.textContent = formatVideoTime(dom.video.duration); updatePauseUI(false); State.isRunning = true; State.lastFrameTime = performance.now(); State.fpsCounter = 0; dom.statusText.textContent = '🔄 启动中...'; dom.videoStatusText.textContent = '🔄 启动中...'; updateDetectUI(true); addDebugLog('🎬 加载本地视频: ' + file.name, 'info'); showToast('🎬 加载视频: ' + file.name, 'success'); if (State.animationId) cancelAnimationFrame(State.animationId); videoLoop(); };
     dom.video.onerror = function(e) { addDebugLog('❌ 视频加载错误: ' + (e.target.error ? e.target.error.message : '未知错误'), 'error'); showToast('❌ 视频加载失败，请检查文件格式', 'error'); dom.statusText.textContent = '❌ 加载失败'; dom.videoStatusText.textContent = '❌ 加载失败'; };
@@ -3558,6 +3699,11 @@ async function init() {
     dom.settingsModelName.textContent = dom.modelSelect.value === 'default' ? '默认模型' : (dom.modelSelect.value || '未选择');
     dom.settingsHistoryCount.textContent = HistoryState.records.length;
     await checkServer();
+    await waitForModelReady(45000);
+    if (!State.modelReadyForDetect) {
+        showToast('⚠️ 模型仍在加载中，检测将于就绪后自动启动', 'warning');
+        addDebugLog('⚠️ 模型加载超时，检测将等待服务就绪后继续', 'warn');
+    }
     await refreshReportSummary();
     await refreshReportManagement();
     updateDetectUI(true);

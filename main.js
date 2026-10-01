@@ -35,6 +35,7 @@ const isMac = process.platform === 'darwin';
 const isWin = process.platform === 'win32';
 
 let mainWindow = null;
+let titleBarIsDark = false;
 let backendProcess = null;
 let backendPort = 8000;
 let isBackendReady = false;
@@ -49,6 +50,7 @@ const MAX_BACKEND_RETRIES = 3;
 // ================================================================
 const userDataPath = app.getPath('userData');
 const dataDir = path.join(userDataPath, 'flame-detect-data');
+const deletedModelsPath = path.join(dataDir, 'deleted-models.json');
 
 console.log(`📂 用户数据目录: ${dataDir}`);
 console.log(`📂 应用目录: ${__dirname}`);
@@ -73,11 +75,22 @@ function ensureDataDirectories() {
         }
     }
 
+    let deletedModels = [];
+    try {
+        deletedModels = JSON.parse(fs.readFileSync(deletedModelsPath, 'utf8'));
+        if (!Array.isArray(deletedModels)) deletedModels = [];
+    } catch (_) {}
+
     const runtimeModelCandidates = [
         path.join(__dirname, 'data', 'models'),
         path.join(__dirname, 'models'),
+        path.join(__dirname, '..', 'models'),
         path.join(process.resourcesPath || '', 'models'),
+        path.join(process.resourcesPath || '', 'resources', 'models'),
         path.join(process.resourcesPath || '', 'app', 'models'),
+        path.join(path.dirname(app.getPath('exe')), 'models'),
+        path.join(path.dirname(app.getPath('exe')), 'resources', 'models'),
+        path.join(path.dirname(app.getPath('exe')), 'app', 'models'),
     ];
 
     let copiedModel = null;
@@ -90,6 +103,7 @@ function ensureDataDirectories() {
         }).sort();
 
         for (const modelFile of modelFiles) {
+            if (deletedModels.includes(modelFile)) continue;
             const source = path.join(modelDir, modelFile);
             const target = path.join(dataDir, 'models', modelFile);
             const shouldCopy = !fs.existsSync(target) || fs.statSync(source).size !== fs.statSync(target).size;
@@ -600,7 +614,7 @@ function createWindow() {
         backgroundColor: '#f3f5f9',
         show: false,
         transparent: false,
-        frame: true,
+        frame: false,
         autoHideMenuBar: true,
         titleBarStyle: 'hidden',
         titleBarOverlay: {
@@ -624,12 +638,23 @@ function createWindow() {
         showWindow();
     });
 
-    if (isDev) {
-        mainWindow.webContents.openDevTools({ mode: 'detach' });
-    }
-
     const menu = Menu.buildFromTemplate(getMenuTemplate());
     Menu.setApplicationMenu(menu);
+
+    ipcMain.removeHandler('window-minimize');
+    ipcMain.removeHandler('window-toggle-maximize');
+    ipcMain.removeHandler('window-close');
+    ipcMain.handle('window-minimize', () => mainWindow && mainWindow.minimize());
+    ipcMain.handle('window-toggle-maximize', () => {
+        if (!mainWindow) return false;
+        if (mainWindow.isMaximized()) mainWindow.unmaximize();
+        else mainWindow.maximize();
+        return mainWindow.isMaximized();
+    });
+    ipcMain.handle('window-close', () => {
+        if (mainWindow) mainWindow.close();
+        return true;
+    });
 
     mainWindow.on('closed', () => {
         mainWindow = null;
@@ -824,11 +849,30 @@ ipcMain.handle('set-title-bar-theme', (event, isDark) => {
         return { success: false };
     }
 
+    titleBarIsDark = Boolean(isDark);
     mainWindow.setTitleBarOverlay({
         color: isDark ? '#0f0f1a' : '#f3f5f9',
         symbolColor: isDark ? '#cbd5e1' : '#475569',
         height: 36,
     });
+    return { success: true };
+});
+
+ipcMain.handle('set-title-bar-modal', (event, active) => {
+    if (!mainWindow || mainWindow.isDestroyed() || typeof mainWindow.setTitleBarOverlay !== 'function') {
+        return { success: false };
+    }
+
+    mainWindow.setTitleBarOverlay(active ? {
+        color: '#00000000',
+        symbolColor: '#ffffff',
+        height: 36,
+    } : {
+        color: titleBarIsDark ? '#0f0f1a' : '#f3f5f9',
+        symbolColor: titleBarIsDark ? '#cbd5e1' : '#475569',
+        height: 36,
+    });
+    mainWindow.setBackgroundColor(active ? '#7f858f' : (titleBarIsDark ? '#0f0f1a' : '#f3f5f9'));
     return { success: true };
 });
 

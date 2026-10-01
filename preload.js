@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     getDataPath: () => ipcRenderer.invoke('get-data-path'),
     convertVideo: (videoData) => ipcRenderer.invoke('convert-video', videoData),
     setTitleBarTheme: (isDark) => ipcRenderer.invoke('set-title-bar-theme', Boolean(isDark)),
+    setTitleBarModal: (active) => ipcRenderer.invoke('set-title-bar-modal', Boolean(active)),
+    minimizeWindow: () => ipcRenderer.invoke('window-minimize'),
+    toggleMaximizeWindow: () => ipcRenderer.invoke('window-toggle-maximize'),
+    closeWindow: () => ipcRenderer.invoke('window-close'),
     onBackendReady: (callback) => {
         return ipcRenderer.on('backend-ready', (event, ...args) => callback(...args));
     },
