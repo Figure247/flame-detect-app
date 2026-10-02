@@ -1644,7 +1644,7 @@
             <div class="stats-grid">
                 <div class="stat-card"><div class="icon red"><i class="fas fa-fire"></i></div><div class="info"><h4 id="imgAlerts">0</h4><p>火情</p></div></div>
                 <div class="stat-card"><div class="icon blue"><i class="fas fa-image"></i></div><div class="info"><h4 id="imgCount">0</h4><p>检测数</p></div></div>
-                <div class="stat-card"><div class="icon green"><i class="fas fa-chart-line"></i></div><div class="info"><h4 id="imgAcc">98.5%</h4><p>置信度</p></div></div>
+                <div class="stat-card"><div class="icon green"><i class="fas fa-chart-line"></i></div><div class="info"><h4 id="imgAcc">--</h4><p>本次平均置信度</p></div></div>
                 <div class="stat-card"><div class="icon gold"><i class="fas fa-database"></i></div><div class="info"><h4 id="imgStorage">0</h4><p>存储</p></div></div>
             </div>
             <div class="panel">
@@ -2213,6 +2213,11 @@ async function detectFile(file) {
     if (State.currentModel) formData.append('model_name', State.currentModel);
     formData.append('conf_threshold', getThreshold());
     return await apiRequest('/predict', 'POST', formData, 60000);
+}
+function updateImageConfidence(boxes) {
+    if (!boxes.length) { dom.imgAcc.textContent = '--'; return; }
+    var average = boxes.reduce(function(total, box) { return total + Number(box[4]); }, 0) / boxes.length;
+    dom.imgAcc.textContent = (average * 100).toFixed(1) + '%';
 }
 
 // ================================================================
@@ -3216,6 +3221,7 @@ async function runBatchDetectionFromSelected() {
     State.batchFiles = validFiles;
     State.isBatchDetecting = true;
     dom.detectImageBtn.disabled = true;
+    dom.imgAcc.textContent = '--';
     dom.imageResult.textContent = '⏳ 批量检测中...'; dom.imageResult.style.color = '#f59e0b';
     try {
         var formData = new FormData();
@@ -3225,8 +3231,22 @@ async function runBatchDetectionFromSelected() {
         var response = await fetch(API_BASE + '/batch_predict', { method: 'POST', body: formData });
         if (!response.ok) { var errorText = await response.text(); throw new Error(errorText || '批量检测失败'); }
         var result = await response.json();
+        var batchFireBoxes = [];
+        (result.results || []).forEach(function(item) {
+            var itemThreshold = item.conf_threshold == null ? getThreshold() : Number(item.conf_threshold);
+            (item.boxes || []).forEach(function(box) {
+                if (Number(box[4]) >= itemThreshold) batchFireBoxes.push(box);
+            });
+        });
+        updateImageConfidence(batchFireBoxes);
         State.batchReport = result.report || null;
         addBatchHistoryRecords(result);
+        var batchFireCount = (result.results || []).reduce(function(total, item) {
+            return total + Number(item && item.fire_count || 0);
+        }, 0);
+        if (batchFireCount > 0) {
+            addAlert(batchFireCount, '批量检测', validFiles.length + ' 张图片');
+        }
         if (State.batchReport) {
             dom.imageResult.innerHTML = '✅ 批量检测完成：' + State.batchReport.fire_images + ' 张火情，' + State.batchReport.safe_images + ' 张安全';
             dom.imageResult.style.color = '#22c55e';
@@ -3298,6 +3318,7 @@ dom.clearImageBtn.addEventListener('click', function() {
     dom.imageBatchFileInput.value = '';
     dom.imageResult.textContent = '等待检测';
     dom.imageResult.style.color = 'var(--text-muted)';
+    dom.imgAcc.textContent = '--';
     dom.detectImageBtn.disabled = true;
     dom.exportReportBtn.disabled = true;
     dom.batchSummaryPanel.style.display = 'none';
@@ -3317,12 +3338,14 @@ dom.detectImageBtn.addEventListener('click', async function() {
     }
     if (!State.currentImageFile) { showToast('请先上传图片', 'warning'); return; }
     dom.detectImageBtn.disabled = true; dom.detectImageBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 检测中...';
+    dom.imgAcc.textContent = '--';
     dom.imageResult.textContent = '⏳ 检测中...'; dom.imageResult.style.color = '#f59e0b';
     try {
         var start = performance.now(); var result = await detectFile(State.currentImageFile); var elapsed = (performance.now() - start).toFixed(0);
         var boxes = result.boxes || []; var threshold = getThreshold();
         addDebugLog('📊 检测完成: ' + boxes.length + ' 个目标, 耗时 ' + elapsed + 'ms', 'info');
         var fireBoxes = boxes.filter(function(b){ return b[4] >= threshold; }); var fireCount = fireBoxes.length;
+        updateImageConfidence(fireBoxes);
         if (result.inference_time_ms) { dom.inferenceSpeed.textContent = result.inference_time_ms + 'ms'; dom.statInferenceSpeed.textContent = result.inference_time_ms + 'ms'; }
         var img = new Image();
         img.onload = function() {

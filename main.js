@@ -234,6 +234,17 @@ function findBackend() {
 
     // 2. 如果没有有效的 backend.exe，则优先直接使用已验证的 flamegpu Python 环境，避免旧 dist CPU 版本回退
     if (isWin) {
+        if (process.env.FLAME_DETECT_PYTHON) {
+            possiblePaths.push(process.env.FLAME_DETECT_PYTHON);
+        }
+
+        if (process.env.CONDA_PREFIX) {
+            possiblePaths.push(path.join(process.env.CONDA_PREFIX, 'python.exe'));
+        }
+
+        // Prefer the active shell interpreter over stale project virtual environments.
+        possiblePaths.push('python.exe', 'python');
+
         const localPythonCandidates = [
             path.join(__dirname, 'venv_backup', 'Scripts', 'python.exe'),
             path.join(__dirname, 'venv', 'Scripts', 'python.exe'),
@@ -258,8 +269,6 @@ function findBackend() {
 
     // 3. 系统 Python (兜底)
     if (isWin) {
-        // 优先使用当前开发环境中的 Python，避免选中未安装依赖的旧版本。
-        possiblePaths.push('python.exe', 'python');
         for (let v of ['313', '312', '311', '310', '39', '38']) {
             possiblePaths.push(`C:\\Python${v}\\python.exe`);
             possiblePaths.push(`C:\\Users\\${process.env.USERNAME}\\AppData\\Local\\Programs\\Python\\Python${v}\\python.exe`);
