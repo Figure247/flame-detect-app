@@ -1,10 +1,10 @@
 # FlameDetect Pro
 
-基于 Electron、FastAPI 和 Ultralytics YOLO 的桌面端火焰检测系统。应用提供图片检测、视频实时监控、检测统计、历史记录和模型管理功能，适合用于本地演示、算法验证和火焰识别场景的快速测试。
+基于 Electron、FastAPI 与 Ultralytics YOLO 的火焰检测桌面应用，支持单张与批量图片检测、视频和摄像头实时监控、告警汇总、检测报告、历史记录及 YOLO 模型管理。提供完整 Windows CUDA 安装包，适用于本地部署、算法验证与火焰识别测试。
 
 当前版本：v2.0.2
 
-> GitHub 仓库简介：FlameDetect Pro 是一款基于 YOLO 的火焰检测桌面应用，支持图片/视频检测、实时监控、模型管理、检测统计与历史结果导出，适合本地部署和算法验证。
+> GitHub 仓库简介：FlameDetect Pro 是一款基于 YOLO 的火焰检测桌面应用，支持单张与批量图片检测、视频/摄像头实时监控、告警汇总、检测报告、历史记录与模型管理，并提供 Windows CUDA 安装包。
 
 ## 功能
 
