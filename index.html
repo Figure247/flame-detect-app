@@ -3231,6 +3231,12 @@ async function runBatchDetectionFromSelected() {
         var response = await fetch(API_BASE + '/batch_predict', { method: 'POST', body: formData });
         if (!response.ok) { var errorText = await response.text(); throw new Error(errorText || '批量检测失败'); }
         var result = await response.json();
+        var successfulImageCount = (result.results || []).filter(function(item) { return item && !item.error; }).length;
+        State.imageCount += successfulImageCount;
+        State.totalDetections += successfulImageCount;
+        dom.imgCount.textContent = State.imageCount;
+        dom.homeImages.textContent = State.imageCount;
+        dom.statTotalDetections.textContent = State.totalDetections;
         var batchFireBoxes = [];
         (result.results || []).forEach(function(item) {
             var itemThreshold = item.conf_threshold == null ? getThreshold() : Number(item.conf_threshold);
